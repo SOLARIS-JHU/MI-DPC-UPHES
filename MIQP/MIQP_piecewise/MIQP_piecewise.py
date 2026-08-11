@@ -4,7 +4,7 @@ MIQP Piecewise Bilinear Optimization Script
 Mixed-Integer Quadratic Programming approach for pumped hydro energy storage optimization 
 using piecewise bilinearization with SOS2 constraints for nonlinear function approximation.
 
-Input: 2024 price data from ../../Data/price_data_2024.csv
+Input: 2024 price data from Data/price_data_2024.csv (resolved relative to the repository root)
 Output:
 - MIQP_piecewise_results.csv (detailed hourly results)  
 - MIQP_piecewise_benchmark.csv (daily performance metrics)
@@ -22,11 +22,15 @@ import gurobipy as gp
 from gurobipy import GRB
 import os
 import time
+from pathlib import Path
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+# Resolve data files relative to this script so it can run from any cwd
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
 # load preprocessed functions & data
-with open('../../preprocess.pkl', 'rb') as f:
+with open(_REPO_ROOT / 'preprocess.pkl', 'rb') as f:
     (v_up_to_h, h_to_v_up, v_low_to_h, h_to_v_low,
      coefs_tur_lin, intercept_tur_lin, coefs_pump_lin, intercept_pump_lin,
      UPC_linear_tur, UPC_linear_pump,
@@ -61,7 +65,7 @@ v_low_init = _hv_fn(head_init)  # Initial lower reservoir volume
 v_low_init = float(v_low_init) if hasattr(v_low_init, 'item') else v_low_init
 
 # %% Load price data function (same as MIQP_nn.py)
-def read_price_data(file_path="../../Data/price_data_2024.csv"):
+def read_price_data(file_path=_REPO_ROOT / "Data" / "price_data_2024.csv"):
     """Read price data from the new CSV format."""
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Price data file not found: {file_path}")
