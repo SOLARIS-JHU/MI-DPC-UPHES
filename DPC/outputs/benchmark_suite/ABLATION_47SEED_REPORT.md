@@ -52,7 +52,7 @@ Timing definitions:
 - `policy inference ms/day`: policy rollout time only, excluding exact evaluation
 - `exact eval ms/day`: exact hourly evaluator time only
 
-Gradient-quality proxies are computed from saved training histories in [ablation_summary.py](/mnt/d/Repositories/L2O4PHES/.worktrees/uphes-step-rollout-compare/DPC/experiments/ablation_summary.py):
+Gradient-quality proxies are computed from saved training histories in [ablation_summary.py](../../experiments/ablation_summary.py):
 
 - `grad_norm_mean`
 - `late_to_early_grad_ratio`
@@ -192,10 +192,10 @@ For the current DPC pipeline, the strongest default remains:
 
 ## Artifact Locations
 
-- canonical report: [ABLATION_47SEED_REPORT.md](/mnt/d/Repositories/L2O4PHES/.worktrees/uphes-step-rollout-compare/DPC/outputs/benchmark_suite/ABLATION_47SEED_REPORT.md)
-- compatibility note at old path: [ABLATION_7SEED_REPORT.md](/mnt/d/Repositories/L2O4PHES/.worktrees/uphes-step-rollout-compare/DPC/outputs/benchmark_suite/ABLATION_7SEED_REPORT.md)
-- aggregated summary table: [ABLATION_47SEED_SUMMARY.csv](/mnt/d/Repositories/L2O4PHES/.worktrees/uphes-step-rollout-compare/DPC/outputs/benchmark_suite/ABLATION_47SEED_SUMMARY.csv)
-- per-run metrics table: [ABLATION_47SEED_RUNS.csv](/mnt/d/Repositories/L2O4PHES/.worktrees/uphes-step-rollout-compare/DPC/outputs/benchmark_suite/ABLATION_47SEED_RUNS.csv)
-- per-seed batch vs step table: [ABLATION_47SEED_DYNAMICS_PER_SEED.csv](/mnt/d/Repositories/L2O4PHES/.worktrees/uphes-step-rollout-compare/DPC/outputs/benchmark_suite/ABLATION_47SEED_DYNAMICS_PER_SEED.csv)
-- active benchmark outputs: [benchmark_suite](/mnt/d/Repositories/L2O4PHES/.worktrees/uphes-step-rollout-compare/DPC/outputs/benchmark_suite)
-- archived pre-ablation outputs: [deprecated_pre_ablation_2026-03-28](/mnt/d/Repositories/L2O4PHES/.worktrees/uphes-step-rollout-compare/DPC/outputs/benchmark_suite/deprecated_pre_ablation_2026-03-28)
+- canonical report: `ABLATION_47SEED_REPORT.md` (this file)
+- compatibility note at old path: [ABLATION_7SEED_REPORT.md](ABLATION_7SEED_REPORT.md)
+- aggregated summary table: [ABLATION_47SEED_SUMMARY.csv](ABLATION_47SEED_SUMMARY.csv)
+- per-run metrics table: [ABLATION_47SEED_RUNS.csv](ABLATION_47SEED_RUNS.csv)
+- per-seed batch vs step table: [ABLATION_47SEED_DYNAMICS_PER_SEED.csv](ABLATION_47SEED_DYNAMICS_PER_SEED.csv)
+- active benchmark outputs: `DPC/outputs/benchmark_suite/` (this directory)
+- archived pre-ablation outputs: `deprecated_pre_ablation_2026-03-28` (internal archive, not part of the public release)
