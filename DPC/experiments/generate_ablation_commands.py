@@ -16,10 +16,6 @@ from DPC.experiments.benchmark_data import DEFAULT_EXTREME_DATE
 DEFAULT_SEEDS = "0,1,2,3,4"
 DEFAULT_INVERSE_PKL = "Data/UPCs/preprocess_inverse_upc.pkl"
 BASE_COMMAND = [
-    "conda",
-    "run",
-    "-n",
-    "torch-env",
     "python",
     "-m",
     "DPC.experiments.benchmark_tuner",

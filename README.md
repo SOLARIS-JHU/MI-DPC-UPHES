@@ -51,12 +51,12 @@ python MIQP/MIQP_linear/MIQP_global_linear.py     # MIQP-GL
 python MIQP/MIQP_piecewise/MIQP_piecewise.py      # MIQP-PW
 ```
 
-**Ablation study (Fig. 6):** generate the 47-seed run queue for all three ablation axes (architecture, temperature schedule, simulator), execute it, then summarize.
+**Ablation study (Fig. 5):** `generate_ablation_commands` prints a runnable bash script to stdout with one training command per ablation axis (architecture, temperature schedule, simulator); redirect it to a file, execute the file, then summarize the resulting run directories and plot. The paper aggregates seeds 0 through 46; pass the seed list you want via `--seeds`. The committed `DPC/outputs/benchmark_suite/ABLATION_47SEED_RUNS.csv` already contains the full 47-seed results, so `fig_ablation_violins` reproduces the paper figure without retraining.
 
 ```bash
-python -m DPC.experiments.generate_ablation_commands
-bash DPC/experiments/run_ablation_seed_queue.sh
-python -m DPC.experiments.ablation_summary
+python -m DPC.experiments.generate_ablation_commands --seeds 0,1,2,3,4 > ablation_commands.sh
+bash ablation_commands.sh
+python -m DPC.experiments.ablation_summary DPC/outputs/benchmark_suite/abl_* --aggregate
 python -m DPC.visualize.fig_ablation_violins
 ```
 

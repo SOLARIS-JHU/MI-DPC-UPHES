@@ -642,13 +642,13 @@ Current MIQP references:
 Promoted default benchmark command:
 
 ```bash
-conda run -n torch-env python -m DPC.experiments.benchmark_tuner
+python -m DPC.experiments.benchmark_tuner
 ```
 
 Report regeneration:
 
 ```bash
-conda run -n torch-env python -m DPC.compare_benchmark_sweeps
+python -m DPC.compare_benchmark_sweeps
 ```
 """
     with open(REPORT_PATH, "w") as f:
