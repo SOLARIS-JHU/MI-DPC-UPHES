@@ -4,7 +4,7 @@ Usage:
     python3 -m DPC.visualize.fig_ablation_violins [--output-dir DIR] [--data-dir DIR]
 
 Defaults:
-    --output-dir  DPC/visualize/output
+    --output-dir  figs/ (at the repository root)
     --data-dir    DPC/outputs/benchmark_suite
 """
 

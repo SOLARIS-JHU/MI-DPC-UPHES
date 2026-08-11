@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 # ── Default output directory ──
 # All figure scripts write PDFs here unless overridden by --output-dir.
-FIGS_OUT = Path("/mnt/d/Repositories/L2O_UPHES_Project/figs")
+FIGS_OUT = Path(__file__).resolve().parents[2] / "figs"
 
 # ── Benchmark data root ──
 _DPC_ROOT = Path(__file__).resolve().parent.parent
