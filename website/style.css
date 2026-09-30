@@ -181,3 +181,4 @@ table.results tbody tr:last-child td { border-bottom: none; }
 @media (prefers-color-scheme: dark) {
   .btn-primary, .btn-primary:hover, .skip { color: #0d1628; }
 }
+#method .wrap-narrow > h3 { margin-top: 2.25rem; font-size: 1.45rem; }

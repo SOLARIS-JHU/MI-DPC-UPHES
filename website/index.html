@@ -182,13 +182,39 @@ $$
           <p>Four ingredients make the mixed-integer nonlinear setting trainable:</p>
           <ol class="components">
             <li><strong>Transformer policy.</strong> Each hour is a token holding the normalized price and the initial head and volume. A Transformer encoder attends over the full horizon, which is what arbitrage needs: whether to pump at 3 a.m. depends on the evening peak. Two heads output the power ratios and the mode logits, and the mode-logit biases are initialized to the mode frequencies of optimal schedules so that training starts from sensible mode mixes.</li>
-            <li><strong>Gumbel-Softmax with two-stage annealing.</strong> The forward pass takes a hard one-hot mode; the backward pass differentiates a softmax relaxation at temperature \(\tau\). High \(\tau\) explores modes but biases the relaxation, low \(\tau\) commits but gives weak, noisy gradients. MI-DPC holds \(\tau = \tau_0\) through a warm-up and then decays it exponentially to \(\tau_{\mathrm{end}}\).</li>
+            <li><strong>Gumbel-Softmax with two-stage annealing.</strong> Each hour's mode is sampled as a hard one-hot choice in the forward pass, while the backward pass differentiates a softmax relaxation at temperature \(\tau\). MI-DPC holds the temperature high through a warm-up and then decays it exponentially. The details are below.</li>
             <li><strong>Parallel differentiable simulator.</strong> Rolling the plant out hour by hour makes backpropagation a 24-step chain, with the vanishing gradients familiar from recurrent networks. The parallel rollout evaluates all hours at once from the initial head, recovers the head trajectory, and re-evaluates once with it. This two-pass fixed-point estimate gives up a little simulator fidelity during training for a much stronger gradient signal.</li>
             <li><strong>Straight-through clamp and soft penalties.</strong> States are clamped to their physical bounds in the forward pass, so profit is never computed on an infeasible trajectory, while the backward pass uses a unit gradient so that a saturated state still produces a training signal. Penalties on the unclamped head and volume push the policy back inside the bounds.</li>
           </ol>
         </div>
+        <h3 id="method-modes">Differentiable mode selection</h3>
         <div class="prose">
-          <p>The temperature follows</p>
+          <p>For each hour \(t\) the policy outputs three logits \(\boldsymbol{\ell}_t = (\ell_{t,P}, \ell_{t,I}, \ell_{t,T})\), one per mode. During training they are perturbed with independent Gumbel noise and passed through a softmax at temperature \(\tau\):</p>
+        </div>
+        <div class="math">
+$$
+g_{t,i} = -\log\!\big(-\log U_{t,i}\big), \quad U_{t,i} \sim \mathrm{Uniform}(0,1), \qquad
+\tilde{s}_{t,i} = \frac{\exp\!\big((\ell_{t,i} + g_{t,i})/\tau\big)}{\sum_{j \in \{P,I,T\}} \exp\!\big((\ell_{t,j} + g_{t,j})/\tau\big)}
+$$
+        </div>
+        <div class="prose">
+          <p>The simulator needs a hard decision, so the forward pass takes the largest entry, and the mode is read off the resulting one-hot vector:</p>
+        </div>
+        <div class="math">
+$$
+\bar{\boldsymbol{s}}_t = \mathrm{one\_hot}\Big( \arg\max_i \, \tilde{s}_{t,i} \Big) = \mathrm{one\_hot}\Big( \arg\max_i \, (\ell_{t,i} + g_{t,i}) \Big), \qquad m_t = \bar{\boldsymbol{s}}_t^{\top} \, [-1,\, 0,\, 1]^{\top}
+$$
+        </div>
+        <div class="prose">
+          <p>By the Gumbel-max trick, \(\bar{\boldsymbol{s}}_t\) is an exact sample from the categorical distribution \(\mathrm{softmax}(\boldsymbol{\ell}_t)\), whatever the temperature. The argmax has zero gradient almost everywhere, so the backward pass replaces its Jacobian with that of the relaxed sample:</p>
+        </div>
+        <div class="math">
+$$
+\frac{\partial \bar{\boldsymbol{s}}_t}{\partial \boldsymbol{\ell}_t} \;:=\; \frac{\partial \tilde{\boldsymbol{s}}_t}{\partial \boldsymbol{\ell}_t}
+$$
+        </div>
+        <div class="prose">
+          <p>The temperature therefore acts on the gradient, not on the forward decision. At high \(\tau\) the relaxed sample \(\tilde{\boldsymbol{s}}_t\) is close to uniform and its gradient is smooth and reaches all three logits, which keeps every mode in play; but it is a poor stand-in for the hard decision, so the gradient is biased. At low \(\tau\) the relaxed sample approaches the one-hot vector, the bias shrinks, and the gradient becomes sharp and noisy. MI-DPC holds the temperature high through a warm-up and then lowers it:</p>
         </div>
         <div class="math">
 $$
@@ -196,7 +222,7 @@ $$
 $$
         </div>
         <div class="prose">
-          <p>with \(E\) the number of epochs and \(e_w\) the warm-up length. In the paper \(\tau_0 = 10\), \(\tau_{\mathrm{end}} = 0.08\), and the warm-up covers 9 of 25 epochs.</p>
+          <p>with \(E\) the number of epochs and \(e_w\) the warm-up length. In the paper \(\tau_0 = 10\), \(\tau_{\mathrm{end}} = 0.08\), and the warm-up covers 9 of 25 epochs. At inference the noise is dropped and each hour takes the mode with the largest logit.</p>
         </div>
         <figure class="figure figure-framed figure-medium">
           <picture>
@@ -205,8 +231,23 @@ $$
             <source srcset="static/gumbel_simplex_dark.gif" media="(prefers-color-scheme: dark)">
             <img src="static/gumbel_simplex.gif" alt="Animation of Gumbel-Softmax samples on the probability simplex with vertices pump, idle, and turbine: as the temperature decreases from 5 to 0.05 the cloud of samples collapses onto the vertices" width="736" height="352" loading="lazy">
           </picture>
-          <figcaption>Gumbel-Softmax samples on the mode simplex as the temperature anneals. Lower \(\tau\) concentrates the samples at the pump (P), idle (I), and turbine (T) vertices. The animation is illustrative: it sweeps \(\tau\) smoothly from 5 to 0.05 and is not the two-stage training schedule above.</figcaption>
+          <figcaption>Relaxed samples \(\tilde{\boldsymbol{s}}_t\) on the mode simplex as the temperature anneals. Lower \(\tau\) concentrates the samples at the pump (P), idle (I), and turbine (T) vertices. The animation is illustrative: it sweeps \(\tau\) smoothly from 5 to 0.05 and is not the two-stage training schedule above.</figcaption>
         </figure>
+        <h3 id="method-why-gumbel">Why Gumbel-Softmax</h3>
+        <div class="prose">
+          <p>The choice follows from the structure of the decision. The paper does not benchmark it against the alternatives below; these are the design reasons.</p>
+          <ol class="components">
+            <li><strong>The decision is categorical, not binary.</strong> Exactly one of three modes is active each hour. A sigmoid with Bernoulli sampling or rounding produces independent binary variables: two of them (pump on, turbine on) admit the invalid combination where both are on, which then needs its own penalty. Rounding a single scalar to \(\{-1, 0, 1\}\) avoids that but imposes an order, with idle sitting between pump and turbine, so a switch from pumping to generating has to pass through idle. A softmax over three logits selects exactly one mode by construction and treats the three symmetrically.</li>
+            <li><strong>Sampling explores, deterministic rounding does not.</strong> A plain straight-through argmax always executes the currently preferred mode. With Gumbel noise the forward pass is a genuine sample from the policy's own distribution, so modes that are close in logit are actually tried in the simulator while the policy is still undecided, and the sampling sharpens by itself as the logits separate.</li>
+            <li><strong>The temperature is a usable dial.</strong> It trades gradient bias against gradient variance, which is what the two-stage schedule exploits; in the ablation, annealing beats a fixed low temperature and more than halves the spread across seeds. A sigmoid or identity straight-through estimator has no such parameter.</li>
+            <li><strong>The simulator's gradient is used directly.</strong> Score-function estimators such as REINFORCE are unbiased and need no relaxation, but they use only the value of the loss and have high variance. Here the plant model is known and differentiable, so a pathwise gradient through it carries far more information per sample, which is the premise of differentiable predictive control.</li>
+          </ol>
+          <p>A note on terms. Strictly, a straight-through estimator is the backward-pass substitution alone: a non-differentiable operation is treated as the identity, or as a smooth surrogate, when differentiating. Gumbel-Softmax is a continuous relaxation of a categorical sample. MI-DPC uses the two together, the straight-through Gumbel-Softmax estimator: hard sample forward, relaxed gradient backward. The family that contains all of these, including sigmoid and sparsemax straight-through variants and score-function methods, is better called gradient estimators for discrete variables.</p>
+        </div>
+        <h3 id="method-clamp">Straight-through clamp and loss</h3>
+        <div class="prose">
+          <p>The same forward-hard, backward-smooth idea is applied to the state bounds.</p>
+        </div>
         <figure class="figure figure-medium">
           <picture>
             <source srcset="static/ste_clamp_dark.png" media="(prefers-color-scheme: dark)">
@@ -223,7 +264,7 @@ $$
 $$
         </div>
         <div class="prose">
-          <p>where \(p^{\mathrm{opt}}\) is the scheduled power, \(p^{\mathrm{sim}}\) the power realized in the simulator, and \(\mathcal{L}^{\mathrm{feas}}\) the penalty on head and volume bound violations. At inference the Gumbel noise is dropped and each hour takes the mode with the largest logit.</p>
+          <p>where \(p^{\mathrm{opt}}\) is the scheduled power, \(p^{\mathrm{sim}}\) the power realized in the simulator, and \(\mathcal{L}^{\mathrm{feas}}\) the penalty on head and volume bound violations.</p>
         </div>
       </div>
     </section>
