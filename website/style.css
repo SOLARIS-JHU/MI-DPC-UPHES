@@ -177,3 +177,7 @@ table.results tbody tr:last-child td { border-bottom: none; }
   .figure-scroll picture { overflow-x: auto; }
   .figure-scroll img { width: 720px; max-width: none; }
 }
+/* White on Spirit Blue is about 2.4:1; dark text keeps the accent fill readable */
+@media (prefers-color-scheme: dark) {
+  .btn-primary, .btn-primary:hover, .skip { color: #0d1628; }
+}
