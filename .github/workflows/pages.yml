@@ -1,0 +1,115 @@
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "website/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Validate website
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install html5validator
+        run: pip install html5validator
+      - name: Validate HTML
+        run: html5validator --root website
+      - name: Check local references and metadata
+        run: |
+          python3 - <<'EOF'
+          import re, sys, pathlib
+          root = pathlib.Path("website")
+          html = (root / "index.html").read_text()
+          errors = []
+          for r in re.findall(r'(?:src|href|srcset)="([^"#?]+)', html):
+              if r.startswith(("http://", "https://", "mailto:", "data:")):
+                  continue
+              if not (root / r).exists():
+                  errors.append(f"broken local reference: {r}")
+          for css in root.glob("*.css"):
+              for u in re.findall(r'url\(["\']?([^"\')]+)', css.read_text()):
+                  if not u.startswith(("http", "data:")) and not (root / u).exists():
+                      errors.append(f"broken url() in {css.name}: {u}")
+          for m in ['name="description"', 'rel="canonical"', 'property="og:title"', 'property="og:image"',
+                    'name="twitter:card"', 'name="citation_title"', 'name="citation_conference_title"',
+                    'name="citation_arxiv_id"', 'name="citation_pdf_url"', 'application/ld+json']:
+              if m not in html:
+                  errors.append(f"missing metadata: {m}")
+          if html.count('name="citation_author"') != 4:
+              errors.append("expected exactly 4 citation_author tags")
+          for img in re.findall(r"<img\b[^>]*>", html):
+              if 'alt="' not in img:
+                  errors.append(f"img without alt: {img[:60]}")
+          for prop in ('property="og:image"', 'name="twitter:image"'):
+              m = re.search(prop + r' content="([^"]+)"', html)
+              if not m or not m.group(1).startswith("https://solaris-jhu.github.io/MI-DPC-UPHES/"):
+                  errors.append(f"{prop} must be an absolute URL on the project site")
+              elif not (root / m.group(1).split("/MI-DPC-UPHES/", 1)[1].split("?")[0]).exists():
+                  errors.append(f"{prop} points at a missing file")
+          for e in errors:
+              print("FAIL:", e)
+          print("OK" if not errors else f"{len(errors)} problem(s)")
+          sys.exit(1 if errors else 0)
+          EOF
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  smoke:
+    name: Smoke test live site
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch the deployed page
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o page.html -w '%{http_code}' "$PAGE_URL")
+            if [ "$code" = "200" ] && grep -q "Differentiable Predictive Control" page.html; then
+              echo "Live site OK: $PAGE_URL"; exit 0
+            fi
+            echo "attempt $i: HTTP $code, retrying in 20 s"; sleep 20
+          done
+          echo "Smoke test failed"; exit 1
