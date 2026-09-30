@@ -39,7 +39,7 @@ def test_build_figure_creates_compact_line_only_training_layout():
 
         grad_ax = next(ax for ax in fig.axes if ax.get_ylabel() == "Gradient norm")
         loss_ax = next(ax for ax in fig.axes if ax.get_ylabel() == "Loss")
-        tau_ax = next(ax for ax in fig.axes if ax.get_ylabel() == "Gumbel-Softmax\ntempreture τ")
+        tau_ax = next(ax for ax in fig.axes if ax.get_ylabel() == "Gumbel-Softmax\ntemperature τ")
 
         assert fig._suptitle is None
         assert grad_ax.get_shared_x_axes().joined(grad_ax, loss_ax)

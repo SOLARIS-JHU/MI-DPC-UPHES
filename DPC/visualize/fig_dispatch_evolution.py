@@ -32,6 +32,7 @@ from DPC.visualize.style import (
     EPOCH_DISPATCH_ALPHA,
     EPOCH_DISPATCH_LINEWIDTH,
     FIGS_OUT,
+    by_theme,
     grid_kw,
     themed,
     MIQP_ROOT,
@@ -244,7 +245,7 @@ def _plot_epoch_dispatch(
         )
 
     if miqp_pw is not None:
-        ax.plot(hours, miqp_pw, color=MIQP_PW_OVERLAY_COLOR, linewidth=1.6, label="MIQP-PW", zorder=6)
+        ax.plot(hours, miqp_pw, color=by_theme(MIQP_PW_OVERLAY_COLOR, "#68ace5"), linewidth=1.6, label="MIQP-PW", zorder=6)
     if miqp_gl is not None:
         ax.plot(hours, miqp_gl, color=C_MIQP_GL, linewidth=1.6, label="MIQP-GL", zorder=6)
     if target_level is not None:
@@ -359,21 +360,21 @@ def _plot_plain_price_and_power(
         ax_power.fill_between(hours, pos_min, pos_max, step="mid", color=PLAIN_POS_REGION_COLOR, alpha=0.16, zorder=0)
         ax_power.fill_between(hours, neg_min, neg_max, step="mid", color=PLAIN_NEG_REGION_COLOR, alpha=0.16, zorder=0)
         for bound in [pos_min, pos_max, neg_min, neg_max]:
-            ax_power.step(hours, bound, where="mid", color=PLAIN_POWER_COLOR, linewidth=0.6, alpha=0.4, zorder=1)
+            ax_power.step(hours, bound, where="mid", color=by_theme(PLAIN_POWER_COLOR, "#ff6b6b"), linewidth=0.6, alpha=0.4, zorder=1)
 
-    ax_power.step(hours, power, where="mid", color=PLAIN_POWER_COLOR, linewidth=1.1, zorder=3)
-    ax_power.axhline(0.0, color=PLAIN_POWER_COLOR, linewidth=0.6, alpha=0.4, zorder=1)
-    ax_price.step(hours, price, where="mid", color=PLAIN_PRICE_COLOR, linewidth=0.9, zorder=0.5)
+    ax_power.step(hours, power, where="mid", color=by_theme(PLAIN_POWER_COLOR, "#ff6b6b"), linewidth=1.1, zorder=3)
+    ax_power.axhline(0.0, color=by_theme(PLAIN_POWER_COLOR, "#ff6b6b"), linewidth=0.6, alpha=0.4, zorder=1)
+    ax_price.step(hours, price, where="mid", color=by_theme(PLAIN_PRICE_COLOR, "#68ace5"), linewidth=0.9, zorder=0.5)
 
     cleanup_axes(ax_power)
     ax_power.xaxis.grid(True, **grid_kw())
     ax_power.spines["bottom"].set_visible(True)
     ax_price.spines["top"].set_visible(False)
 
-    ax_power.set_ylabel("Power (MW)", color=PLAIN_POWER_COLOR, fontsize=FIG_LABEL_FONTSIZE)
-    ax_price.set_ylabel("Price (€/MWh)", color=PLAIN_PRICE_COLOR, fontsize=FIG_LABEL_FONTSIZE)
-    ax_power.tick_params(axis="both", colors=PLAIN_POWER_COLOR, labelsize=FIG_TICK_FONTSIZE)
-    ax_price.tick_params(axis="y", colors=PLAIN_PRICE_COLOR, labelsize=FIG_TICK_FONTSIZE)
+    ax_power.set_ylabel("Power (MW)", color=by_theme(PLAIN_POWER_COLOR, "#ff6b6b"), fontsize=FIG_LABEL_FONTSIZE)
+    ax_price.set_ylabel("Price (€/MWh)", color=by_theme(PLAIN_PRICE_COLOR, "#68ace5"), fontsize=FIG_LABEL_FONTSIZE)
+    ax_power.tick_params(axis="both", colors=by_theme(PLAIN_POWER_COLOR, "#ff6b6b"), labelsize=FIG_TICK_FONTSIZE)
+    ax_price.tick_params(axis="y", colors=by_theme(PLAIN_PRICE_COLOR, "#68ace5"), labelsize=FIG_TICK_FONTSIZE)
     ax_power.set_xlabel("", fontsize=FIG_LABEL_FONTSIZE)
     ax_power.set_xlim(0, 23)
     ax_power.set_xticks(range(0, 24, 4))
@@ -404,7 +405,7 @@ def _plot_training_curve(
         vmin=float(history_epochs.min()),
         vmax=float(history_epochs.max()) if history_epochs.size > 1 else float(history_epochs.min()) + 1.0,
     )
-    ax.plot(history_epochs, losses, color=LOSS_COLOR, linewidth=0.9, alpha=0.85, zorder=1)
+    ax.plot(history_epochs, losses, color=by_theme(LOSS_COLOR, "#c792ea"), linewidth=0.9, alpha=0.85, zorder=1)
     ax.scatter(history_epochs, losses, c=history_epochs, cmap=LOSS_DOT_CMAP, norm=norm, s=7, zorder=2)
     final_epoch = float(history_epochs.max())
     final_value = float(losses[np.argmax(history_epochs)])
@@ -412,11 +413,11 @@ def _plot_training_curve(
 
     cleanup_axes(ax)
     ax.set_xlabel("Epoch", fontsize=FIG_LABEL_FONTSIZE)
-    ax.set_ylabel("Loss", color=LOSS_COLOR, fontsize=FIG_LABEL_FONTSIZE)
+    ax.set_ylabel("Loss", color=by_theme(LOSS_COLOR, "#c792ea"), fontsize=FIG_LABEL_FONTSIZE)
     ax.yaxis.set_label_coords(-0.1, 0.5)  
     ax.yaxis.set_major_formatter(FuncFormatter(_format_sci_tick))
     ax.tick_params(axis="both", labelsize=FIG_TICK_FONTSIZE)
-    ax.tick_params(axis="y", colors=LOSS_COLOR)
+    ax.tick_params(axis="y", colors=by_theme(LOSS_COLOR, "#c792ea"))
     if history_epochs.size > 1:
         ax.set_xlim(float(history_epochs.min()), float(history_epochs.max()))
     xticks = _epoch_xticks(history_epochs)
@@ -424,7 +425,7 @@ def _plot_training_curve(
 
     tau_ax = ax.twinx()
     tau_ax.plot(history_epochs, tau, color=TAU_COLOR, linewidth=0.9, linestyle="--", zorder=2)
-    tau_ax.set_ylabel("Gumbel-Softmax\ntempreture τ", color=TAU_COLOR, labelpad=1.5, fontsize=FIG_LABEL_FONTSIZE)
+    tau_ax.set_ylabel("Gumbel-Softmax\ntemperature τ", color=TAU_COLOR, labelpad=1.5, fontsize=FIG_LABEL_FONTSIZE)
     tau_ax.yaxis.set_label_coords(1.08, 0.5) 
     tau_ax.tick_params(axis="y", colors=TAU_COLOR, labelsize=FIG_TICK_FONTSIZE)
     tau_ax.spines["top"].set_visible(False)
@@ -552,7 +553,7 @@ def _build_figure(
                 aux=final_aux,
                 aux_label="Head (m)",
                 price_color=themed(PRICE_COLOR, "muted"),
-                aux_color=HEAD_COLOR,
+                aux_color=by_theme(HEAD_COLOR, "#ff6b6b"),
                 aux_as_step=False,
             )
     if ax_train is not None:
