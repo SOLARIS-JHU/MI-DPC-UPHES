@@ -251,12 +251,12 @@ $$
           </div>
           <figcaption>Mean ex-post profit across the 19 benchmark days. The MIQP baselines are deterministic, solved with Gurobi to a 1% optimality gap with a one-hour limit.</figcaption>
         </figure>
-        <figure class="figure figure-medium">
+        <figure class="figure figure-wide figure-scroll">
           <picture>
             <source srcset="static/profit_distribution_dark.png" media="(prefers-color-scheme: dark)">
-            <img src="static/profit_distribution.png" alt="Kernel density estimates of per-day ex-post profit over the 19 benchmark days for MI-DPC, MIQP-PW, and MIQP-GL, with dashed vertical lines at each mean; the MI-DPC band shows the spread across 47 seeds" width="1038" height="639" loading="lazy">
+            <img src="static/profit_distribution.png" alt="Two density plots of per-day ex-post profit over the 19 benchmark days. Left: MI-DPC against MIQP-GL. Right: MI-DPC against MIQP-PW. Each curve is filled underneath and has a dashed vertical line at its mean; the legends give the mean and standard deviation across days" width="2000" height="565" loading="lazy">
           </picture>
-          <figcaption>Distribution of per-day ex-post profit over the 19 benchmark days. The MI-DPC curve is the mean density across 47 seeds with the min-max envelope shaded; dashed lines mark the means. MI-DPC and MIQP-PW nearly coincide, while MIQP-GL is shifted toward lower profit. This figure is supplementary; it is not in the conference paper.</figcaption>
+          <figcaption>Distribution of per-day ex-post profit over the 19 benchmark days: MI-DPC against (a) MIQP-GL and (b) MIQP-PW. Dashed lines mark the means; the legend gives the mean and the standard deviation across days, which reflects how much profit varies from one price day to another, not the spread across seeds. MI-DPC profits are averaged over 47 seeds for each day. This figure is supplementary; it is not in the conference paper.</figcaption>
         </figure>
         <h3 id="results-schedule">A converged schedule</h3>
         <div class="prose">
