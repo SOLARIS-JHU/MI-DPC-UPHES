@@ -88,3 +88,13 @@ def test_last_frame_matches_the_static_figure_trajectories():
         plt.close(fig)
     # Fully revealed, the animation is as colourful as the static figure (plus the cursor).
     assert _colourfulness(last) >= 0.97 * _colourfulness(static)
+
+
+def test_gumbel_frames_anneal_temperature():
+    from DPC.visualize import anim_gumbel_simplex
+
+    frames, taus = anim_gumbel_simplex.render_frames(n_frames=6, dpi=50)
+    assert len(frames) == len(taus) == 6
+    assert taus[0] == 5.0 and abs(taus[-1] - 0.05) < 1e-9
+    assert all(a > b for a, b in zip(taus, taus[1:]))
+    assert frames[0].size == frames[-1].size
