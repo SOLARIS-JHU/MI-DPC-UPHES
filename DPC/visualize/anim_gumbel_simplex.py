@@ -132,7 +132,7 @@ def render_frames(*, n_frames: int = 60, dpi: int = 160) -> tuple[list[Image.Ima
         ax_curve.plot(epochs, taus, color=themed("0.4", "muted"), linewidth=1.0, zorder=2)
         ax_curve.set_xlim(1, n_frames)
         ax_curve.set_ylim(0, TAU_HI * 1.05)
-        ax_curve.set_xlabel("Epoch", labelpad=1, fontsize=8)
+        ax_curve.set_xlabel("Annealing step", labelpad=1, fontsize=8)
         ax_curve.set_ylabel(r"$\tau$", labelpad=1, fontsize=8)
         ax_curve.set_yticks([0, 2, 4])
         ax_curve.tick_params(axis="both", length=2.0, pad=1, labelsize=7)
