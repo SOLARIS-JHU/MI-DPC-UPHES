@@ -323,17 +323,23 @@ def build_suite_loss(cfg: ExperimentConfig, params: dict):
 
     vol_balance_obj = Loss(["x", "d"], vol_balance_fn, weight=cfg.vol_balance_weight, name="vol_balance")
 
+    def violation_channel(aux, k):
+        # Pre-clamp violations [v_lo, v_hi, h_lo, h_hi] sit at channels 4-7 of the
+        # batch aux and at channels 8-11 of the 12-channel step rollout aux.
+        offset = 8 if aux.shape[-1] >= 12 else 4
+        return aux[:, :, offset + k]
+
     def vol_lb_fn(aux):
-        return aux[:, :, 4].mean()
+        return violation_channel(aux, 0).mean()
 
     def vol_ub_fn(aux):
-        return aux[:, :, 5].mean()
+        return violation_channel(aux, 1).mean()
 
     def h_lb_fn(aux):
-        return aux[:, :, 6].mean()   # mean relu(head_min - h_raw) over (B, T)
+        return violation_channel(aux, 2).mean()   # mean relu(head_min - h_raw) over (B, T)
 
     def h_ub_fn(aux):
-        return aux[:, :, 7].mean()   # mean relu(h_raw - head_max) over (B, T)
+        return violation_channel(aux, 3).mean()   # mean relu(h_raw - head_max) over (B, T)
 
     vol_lb_obj = Loss(["aux"], vol_lb_fn, weight=cfg.vol_traj_penalty * cfg.vol_lb_scale, name="vol_lb")
     vol_ub_obj = Loss(["aux"], vol_ub_fn, weight=cfg.vol_traj_penalty * cfg.vol_ub_scale, name="vol_ub")

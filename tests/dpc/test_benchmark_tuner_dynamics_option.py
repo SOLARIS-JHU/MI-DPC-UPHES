@@ -341,6 +341,20 @@ def test_build_suite_loss_uses_executed_power_when_step_aux_is_available():
     assert torch.isclose(loss_value, torch.tensor(10.0))
 
 
+@pytest.mark.parametrize("channels, offset", [(8, 4), (12, 8)])
+def test_build_suite_loss_reads_violation_channels_for_both_aux_layouts(channels, offset):
+    cfg = ExperimentConfig(architecture="transformer", sampler="cluster_balanced", batch_size=1)
+    loss, _ = build_suite_loss(cfg, {"target_head": 1.0, "target_vol_low": 0.0})
+    objectives = {obj.name: obj for obj in loss.objectives}
+    # Every non-violation channel holds a value that would be caught if it were read as a penalty.
+    aux = torch.full((1, 1, channels), 99.0, dtype=torch.float32)
+    aux[..., offset:offset + 4] = torch.tensor([1.0, 2.0, 3.0, 4.0])
+
+    values = [float(objectives[name].loss(aux)) for name in ("vol_lb", "vol_ub", "h_lb", "h_ub")]
+
+    assert values == [1.0, 2.0, 3.0, 4.0]
+
+
 def test_evaluate_price_dict_uses_executed_power_for_step_aux():
     x = torch.tensor(
         [[[1.0, 1.0]]] + [[[2.0, 2.0]] for _ in range(24)],
