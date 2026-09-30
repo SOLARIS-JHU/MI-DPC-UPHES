@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MI-DPC for Underground Pumped Hydro Scheduling</title>
+  <meta name="description" content="Day-ahead scheduling of an underground pumped hydro plant is a mixed-integer nonlinear program. MI-DPC trains a Transformer policy through a differentiable simulator and a Gumbel-Softmax straight-through estimator, with no pre-solved schedules, and produces a 24-hour schedule in 4.9 ms within 1.6% of a piecewise MIQP baseline.">
+  <link rel="canonical" href="https://solaris-jhu.github.io/MI-DPC-UPHES/">
+  <link rel="icon" type="image/png" sizes="64x64" href="static/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="static/apple-touch-icon.png">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Mixed-Integer Nonlinear Differentiable Predictive Control for Underground Pumped Hydro Energy Storage Systems">
+  <meta property="og:description" content="A self-supervised neural policy for mixed-integer nonlinear scheduling: within 1.6% of piecewise MIQP profit, five orders of magnitude faster online.">
+  <meta property="og:url" content="https://solaris-jhu.github.io/MI-DPC-UPHES/">
+  <meta property="og:image" content="https://solaris-jhu.github.io/MI-DPC-UPHES/static/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MI-DPC for Underground Pumped Hydro Scheduling">
+  <meta name="twitter:description" content="Within 1.6% of piecewise MIQP profit at 4.9 ms per schedule. IEEE CDC 2026.">
+  <meta name="twitter:image" content="https://solaris-jhu.github.io/MI-DPC-UPHES/static/og.png">
+
+  <meta name="citation_title" content="Mixed-Integer Nonlinear Differentiable Predictive Control for Underground Pumped Hydro Energy Storage Systems">
+  <meta name="citation_author" content="Zheng, Honghui">
+  <meta name="citation_author" content="Boldocký, Ján">
+  <meta name="citation_author" content="Dvorkin, Yury">
+  <meta name="citation_author" content="Drgoňa, Ján">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_conference_title" content="IEEE Conference on Decision and Control (CDC)">
+  <meta name="citation_arxiv_id" content="2609.17964">
+  <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2609.17964">
+  <meta name="citation_abstract_html_url" content="https://arxiv.org/abs/2609.17964">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "headline": "Mixed-Integer Nonlinear Differentiable Predictive Control for Underground Pumped Hydro Energy Storage Systems",
+    "author": [
+      {"@type": "Person", "name": "Honghui Zheng", "affiliation": {"@type": "Organization", "name": "Johns Hopkins University"}},
+      {"@type": "Person", "name": "Ján Boldocký", "affiliation": {"@type": "Organization", "name": "Slovak University of Technology in Bratislava"}},
+      {"@type": "Person", "name": "Yury Dvorkin", "affiliation": {"@type": "Organization", "name": "Johns Hopkins University"}},
+      {"@type": "Person", "name": "Ján Drgoňa", "affiliation": {"@type": "Organization", "name": "Johns Hopkins University"}}
+    ],
+    "isPartOf": {"@type": "PublicationEvent", "name": "IEEE Conference on Decision and Control (CDC) 2026"},
+    "datePublished": "2026",
+    "identifier": "arXiv:2609.17964",
+    "sameAs": ["https://arxiv.org/abs/2609.17964"],
+    "url": "https://solaris-jhu.github.io/MI-DPC-UPHES/",
+    "image": "https://solaris-jhu.github.io/MI-DPC-UPHES/static/og.png"
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false}], throwOnError: false});"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <main id="main">
+    <section class="hero">
+      <div class="wrap">
+        <header class="hero-head">
+          <p class="eyebrow">IEEE Conference on Decision and Control (CDC), 2026</p>
+          <h1>Mixed-Integer Nonlinear Differentiable Predictive Control for Underground Pumped Hydro Energy Storage Systems</h1>
+          <p class="authors">
+            <span class="author">Honghui Zheng<sup>1</sup>
+              <a class="alink" href="https://www.linkedin.com/in/honghui-zheng-4904863a3/" aria-label="Honghui Zheng on LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+              <a class="alink" href="mailto:hzheng39@jh.edu" aria-label="Email Honghui Zheng"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 6 12 13 2 6"/></svg></a>
+            </span>
+            <span class="author">Ján Boldocký<sup>2</sup>
+              <a class="alink" href="https://www.linkedin.com/in/jan-boldocky-7b26881ba/" aria-label="Ján Boldocký on LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+              <a class="alink" href="mailto:jan.boldocky@stuba.sk" aria-label="Email Ján Boldocký"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 6 12 13 2 6"/></svg></a>
+            </span>
+            <span class="author">Yury Dvorkin<sup>1</sup>
+              <a class="alink" href="https://www.linkedin.com/in/uzi-yury-dvorkin-63455310/" aria-label="Yury Dvorkin on LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+              <a class="alink" href="mailto:ydvorki1@jh.edu" aria-label="Email Yury Dvorkin"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 6 12 13 2 6"/></svg></a>
+            </span>
+            <span class="author">Ján Drgoňa<sup>1</sup>
+              <a class="alink" href="https://www.linkedin.com/in/drgona/" aria-label="Ján Drgoňa on LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+              <a class="alink" href="mailto:jdrgona1@jh.edu" aria-label="Email Ján Drgoňa"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 6 12 13 2 6"/></svg></a>
+            </span>
+          </p>
+          <p class="affiliations">
+            <sup>1</sup><a href="https://engineering.jhu.edu/case/">Department of Civil and Systems Engineering</a>, <a href="https://www.jhu.edu/">Johns Hopkins University</a><br>
+            <sup>2</sup><a href="https://www.stuba.sk/english.html?page_id=132">Slovak University of Technology in Bratislava</a>
+          </p>
+        </header>
+        <div class="hero-grid">
+          <div class="hero-text">
+            <p class="summary">Scheduling an underground pumped hydro plant for the day-ahead market is a mixed-integer nonlinear program: every hour the unit picks pump, idle, or turbine and a power setpoint, under polynomial performance curves and a nonconvex volume-head coupling. MI-DPC trains a Transformer policy to output the whole 24-hour schedule in one forward pass. Training is self-supervised: the gradient of the ex-post profit flows through a differentiable plant simulator and a Gumbel-Softmax straight-through estimator, so no pre-solved schedules are needed.</p>
+            <p class="buttons">
+              <a class="btn btn-primary" href="https://arxiv.org/abs/2609.17964">Paper</a>
+              <a class="btn" href="https://github.com/SOLARIS-JHU/MI-DPC-UPHES">Code</a>
+              <a class="btn" href="#citation">BibTeX</a>
+            </p>
+          </div>
+          <figure class="hero-art">
+            <img src="static/UPHES.svg" alt="Schematic of the UPHES system: an upper reservoir, a lower reservoir in an abandoned mine, and a reversible Francis pump-turbine with head h_t bounded by h_min and h_max" width="480" height="284">
+          </figure>
+        </div>
+        <div class="logos" aria-label="Institutions">
+          <a href="https://engineering.jhu.edu/case/"><img src="static/logos/jhu-whiting.svg" alt="Johns Hopkins Whiting School of Engineering" width="240" height="64"></a>
+          <a href="https://solaris-jhu.github.io/solaris-website/"><img class="square" src="static/logos/solaris.png" alt="SOLARIS lab, Johns Hopkins University" width="240" height="199"></a>
+          <a href="https://energyinstitute.jhu.edu/"><img src="static/logos/rosei.png" alt="Johns Hopkins Ralph O'Connor Sustainable Energy Institute" width="956" height="238"></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Headline results">
+      <div class="wrap stats-grid">
+        <div class="card stat">
+          <p class="stat-value">1.6%</p>
+          <p class="stat-label">gap to piecewise MIQP</p>
+          <p class="stat-note">Mean ex-post profit of 2,489 ± 71 EUR/day over 47 training seeds, against 2,530 EUR/day for the piecewise MIQP baseline.</p>
+        </div>
+        <div class="card stat">
+          <p class="stat-value">4.9 ms</p>
+          <p class="stat-label">per 24-hour schedule</p>
+          <p class="stat-note">Five orders of magnitude faster than piecewise MIQP (919 s) and 390× faster than global-linear MIQP (1.91 s).</p>
+        </div>
+        <div class="card stat">
+          <p class="stat-value">+24.6%</p>
+          <p class="stat-label">profit over global-linear MIQP</p>
+          <p class="stat-note">2,489 versus 1,997 EUR/day, scored under the exact nonlinear simulator on 19 held-out days.</p>
+        </div>
+        <div class="card stat">
+          <p class="stat-value">161 s</p>
+          <p class="stat-label">of one-time training</p>
+          <p class="stat-note">Self-supervised on sampled price scenarios, with no pre-solved optimal schedules as labels.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="problem" class="alt">
+      <div class="wrap wrap-narrow">
+        <h2>The scheduling problem</h2>
+      </div>
+    </section>
+
+    <section id="method">
+      <div class="wrap wrap-narrow">
+        <h2>MI-DPC</h2>
+      </div>
+    </section>
+
+    <section id="results" class="alt">
+      <div class="wrap wrap-narrow">
+        <h2>Results</h2>
+      </div>
+    </section>
+
+    <section id="citation">
+      <div class="wrap wrap-narrow">
+        <h2>Citation</h2>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>Code released under the MIT License. Built on <a href="https://github.com/pnnl/neuromancer">NeuroMANCER</a> and <a href="https://pytorch.org/">PyTorch</a>. Supported by the <a href="https://energyinstitute.jhu.edu/">Ralph O'Connor Sustainable Energy Institute</a> and by the U.S. DOE, Office of Science, ASCR program under the SciDAC Institute "LEADS: LEarning-Accelerated Domain Science". J.B. acknowledges the support of the Scientific Grant Agency of the Slovak Republic under grant 1/0401/26.</p>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
