@@ -424,7 +424,7 @@ def test_build_figure_includes_colorbar_and_miqp_overlay_lines():
         assert main_ax.get_title() == ""
         assert fig._suptitle is None
         ylabels = {ax.get_ylabel() for ax in fig.axes}
-        assert {"Power (MW)", "Price (€/MWh)", "Head (m)", "Epoch index", "Loss", "Gumbel-Softmax\ntempreture τ", "Learning rate"} <= ylabels
+        assert {"Power (MW)", "Price (€/MWh)", "Head (m)", "Epoch index", "Loss", "Gumbel-Softmax\ntemperature τ", "Learning rate"} <= ylabels
         assert main_ax.get_xlabel() == ""
         assert price_ax.get_xlabel() == ""
         assert [text.get_text() for text in fig.texts].count("Hour") == 1
@@ -441,7 +441,7 @@ def test_build_figure_includes_colorbar_and_miqp_overlay_lines():
         assert top_mid_gap < 0.05
         assert mid_bot_gap > 0.07
         assert train_ax.get_xlabel() == "Epoch"
-        tau_ax = next(ax for ax in fig.axes if ax.get_ylabel() == "Gumbel-Softmax\ntempreture τ")
+        tau_ax = next(ax for ax in fig.axes if ax.get_ylabel() == "Gumbel-Softmax\ntemperature τ")
         lr_ax = next(ax for ax in fig.axes if ax.get_ylabel() == "Learning rate")
         assert len(train_ax.get_lines()) == 1
         assert len(tau_ax.get_lines()) == 1
@@ -494,7 +494,7 @@ def test_build_plain_figure_adds_initialization_and_final_epoch_labels():
         assert main_ax.get_ylabel() == "Head (m)"
         ylabels = {ax.get_ylabel() for ax in fig.axes}
         assert "Learning rate" not in ylabels
-        assert {"Head (m)", "Price (€/MWh)", "Power (MW)", "Epoch index", "Loss", "Gumbel-Softmax\ntempreture τ"} <= ylabels
+        assert {"Head (m)", "Price (€/MWh)", "Power (MW)", "Epoch index", "Loss", "Gumbel-Softmax\ntemperature τ"} <= ylabels
         legend = main_ax.get_legend()
         assert legend is not None
         assert legend._loc == 2

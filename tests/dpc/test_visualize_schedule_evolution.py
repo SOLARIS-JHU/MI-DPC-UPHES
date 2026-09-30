@@ -132,3 +132,48 @@ def test_load_schedule_payload_uses_cached_final_trace_for_power_and_head(monkey
     assert np.allclose(payload["head"], np.linspace(74.0, 77.0, 24, dtype=float))
     assert np.allclose(payload["volume"], np.linspace(74000.0, 77000.0, 24, dtype=float))
     assert payload["target_volume"] == 74000.0
+
+
+def test_draw_schedule_exposes_trajectory_artists_with_alpha():
+    fig, axes, artists = fig_schedule_evolution.draw_schedule(
+        _sample_schedule_payload(), trajectory_alpha=0.12
+    )
+    try:
+        assert set(axes) == {"power", "price", "head", "volume"}
+        assert set(artists) == {"power", "price", "head", "volume"}
+        assert all(abs(a.get_alpha() - 0.12) < 1e-9 for a in artists.values())
+    finally:
+        plt.close(fig)
+
+
+def test_web_dark_theme_recolours_schedule_axes(monkeypatch):
+    import DPC.visualize.style as style
+
+    # build_figure calls apply_style(), which reads the theme from the environment.
+    monkeypatch.setenv(style.THEME_ENV, "web-dark")
+    with plt.rc_context():
+        try:
+            fig = fig_schedule_evolution.build_figure(_sample_schedule_payload())
+            assert fig.axes[0].xaxis.get_gridlines()[0].get_color() == "#2a3a5c"
+            plt.close(fig)
+        finally:
+            style.apply_theme("paper")
+
+
+def test_web_dark_theme_brightens_schedule_series(monkeypatch):
+    import DPC.visualize.style as style
+    from matplotlib.colors import to_hex
+
+    with plt.rc_context():
+        try:
+            fig, _, artists = fig_schedule_evolution.draw_schedule(_sample_schedule_payload())
+            paper = to_hex(artists["power"].get_color())
+            plt.close(fig)
+            monkeypatch.setenv(style.THEME_ENV, "web-dark")
+            fig, _, artists = fig_schedule_evolution.draw_schedule(_sample_schedule_payload())
+            dark = to_hex(artists["power"].get_color())
+            plt.close(fig)
+        finally:
+            style.apply_theme("paper")
+    assert paper == fig_schedule_evolution.POWER_COLOR.lower()
+    assert dark != paper

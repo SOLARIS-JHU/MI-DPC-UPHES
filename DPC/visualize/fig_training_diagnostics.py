@@ -194,7 +194,7 @@ def build_figure(payload: dict[str, object]) -> plt.Figure:
     ax_loss.set_xlabel("Epoch", fontsize=AXIS_FONT_SIZE)
 
     ax_tau.plot(epochs, tau, color=TAU_COLOR, linewidth=LINEWIDTH_MAIN)
-    ax_tau.set_ylabel("Gumbel-Softmax\ntempreture τ", color=TAU_COLOR, fontsize=AXIS_FONT_SIZE, labelpad=1.5)
+    ax_tau.set_ylabel("Gumbel-Softmax\ntemperature τ", color=TAU_COLOR, fontsize=AXIS_FONT_SIZE, labelpad=1.5)
     ax_tau.tick_params(axis="y", colors=TAU_COLOR, labelsize=TICK_FONT_SIZE)
     ax_tau.spines["top"].set_visible(False)
 

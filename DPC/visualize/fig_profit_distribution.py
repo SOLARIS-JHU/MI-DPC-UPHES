@@ -1,7 +1,9 @@
 """Figure 1 — Ex-post profit distribution KDE.
 
-Single-panel KDE comparison of MI-DPC retained transformer seeds vs
-MIQP-PW vs MIQP-GL on the 19-day benchmark.
+Two density panels (MI-DPC against MIQP-GL, and against MIQP-PW) of per-day
+ex-post profit on the 19-day benchmark, in the style of the DFL-UPHES paper:
+Gaussian KDE at half of Scott's bandwidth, drawn over the observed range.
+MI-DPC is averaged over the retained transformer seeds per day.
 
 Usage
 -----
@@ -25,7 +27,8 @@ from DPC.visualize.style import (
     C_MIDPC,
     C_MIQP_PW,
     C_MIQP_GL,
-    COL_WIDTH,
+    FULL_WIDTH,
+    themed,
     FIGS_OUT, BENCH_DIR, MIQP_ROOT,
 )
 from DPC.visualize.data import filter_runs, load_ablation_runs_csv
@@ -79,73 +82,67 @@ def _load_miqp_profits(csv_path: pathlib.Path) -> np.ndarray:
 
 # ── Plotting ───────────────────────────────────────────────────────────────────
 
-def _make_kde_grid(values: np.ndarray, x: np.ndarray) -> np.ndarray:
-    kde = gaussian_kde(values)
-    return kde(x)
+BW_FACTOR = 0.5   # fraction of Scott's bandwidth, as in the DFL-UPHES density figure
+FILL_ALPHA = 0.2
+
+
+def density_curve(values: np.ndarray, bw_factor: float = BW_FACTOR, points: int = 500) -> tuple[np.ndarray, np.ndarray]:
+    """Gaussian KDE at bw_factor × Scott's bandwidth, evaluated only over the observed range."""
+    values = np.asarray(values, dtype=float)
+    kde = gaussian_kde(values, bw_method="scott")
+    kde.set_bandwidth(kde.factor * bw_factor)
+    x = np.linspace(values.min(), values.max(), points)
+    return x, kde(x)
+
+
+def _draw_method(ax, values: np.ndarray, label: str, color: str) -> None:
+    x, density = density_curve(values)
+    ax.plot(x, density, color=color, linewidth=1.0, alpha=0.95,
+            label=f"{label} (€{values.mean():.0f}±{values.std(ddof=1):.0f})")
+    ax.fill_between(x, density, alpha=FILL_ALPHA, color=color)
+    ax.axvline(values.mean(), color=color, linestyle="--", linewidth=1.0, alpha=0.7)
+
+
+def build_figure(midpc: np.ndarray, miqp_gl: np.ndarray, miqp_pw: np.ndarray) -> plt.Figure:
+    """Two side-by-side density panels: MI-DPC against each MIQP baseline.
+
+    Every input holds one ex-post profit per benchmark day; the legend gives the
+    mean and the standard deviation across days.
+    """
+    apply_style()
+    fig, axes = plt.subplots(1, 2, figsize=(FULL_WIDTH, 2.0))
+    panels = (
+        ("(a) MI-DPC vs. MIQP-GL", "MIQP-GL", miqp_gl, C_MIQP_GL),
+        ("(b) MI-DPC vs. MIQP-PW", "MIQP-PW", miqp_pw, C_MIQP_PW),
+    )
+    frame = themed("black", "fg")
+    for ax, (title, baseline_label, baseline, color) in zip(axes, panels):
+        _draw_method(ax, np.asarray(midpc, dtype=float), "MI-DPC", C_MIDPC)
+        _draw_method(ax, np.asarray(baseline, dtype=float), baseline_label, color)
+        ax.set_xlabel("Ex-post profit (EUR/day)")
+        ax.set_ylabel("Density")
+        ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+        ax.grid(True, alpha=0.25, linestyle=":", linewidth=0.4, color=themed("0.5", "muted"))
+        cleanup_axes(ax, grid=False)
+        ax.set_ylim(top=ax.get_ylim()[1] * 1.38)  # headroom so the legend clears the curves
+        ax.legend(loc="upper center", ncol=2, frameon=True, framealpha=0.95, edgecolor=frame, fancybox=False,
+                  fontsize=6.5, columnspacing=1.0, handlelength=1.4)
+        ax.set_title(title, pad=5)
+    fig.tight_layout(pad=0.3, w_pad=0.5)
+    return fig
 
 
 def make_figure(output_dir: pathlib.Path) -> pathlib.Path:
     """Build and save the profit distribution figure. Returns path to PDF."""
-    # ── Load data ──
     rows = load_ablation_runs_csv(_RUNS_CSV)
     dpc_rows = filter_runs(rows, study="architecture", variant="transformer")
-    dpc_seed_profits = _load_dpc_profits_per_seed(dpc_rows)
-    miqp_pw_profits = _load_miqp_profits(_MIQP_PW_CSV)
-    miqp_gl_profits = _load_miqp_profits(_MIQP_GL_CSV)
+    # One value per benchmark day for every method: MI-DPC is averaged over its seeds.
+    midpc = np.stack(_load_dpc_profits_per_seed(dpc_rows), axis=0).mean(axis=0)
+    fig = build_figure(midpc, _load_miqp_profits(_MIQP_GL_CSV), _load_miqp_profits(_MIQP_PW_CSV))
 
-    # ── Build shared x grid ──
-    all_vals = np.concatenate(dpc_seed_profits + [miqp_pw_profits, miqp_gl_profits])
-    x_min = all_vals.min() - 0.05 * (all_vals.max() - all_vals.min())
-    x_max = all_vals.max() + 0.05 * (all_vals.max() - all_vals.min())
-    x = np.linspace(x_min, x_max, 500)
-
-    # ── MI-DPC: per-seed KDEs → mean ± envelope ──
-    dpc_kdes = np.stack([_make_kde_grid(p, x) for p in dpc_seed_profits], axis=0)
-    dpc_mean_kde = dpc_kdes.mean(axis=0)
-    dpc_min_kde  = dpc_kdes.min(axis=0)
-    dpc_max_kde  = dpc_kdes.max(axis=0)
-
-    # ── MIQP KDEs ──
-    pw_kde = _make_kde_grid(miqp_pw_profits, x)
-    gl_kde = _make_kde_grid(miqp_gl_profits, x)
-
-    # ── Mean values for vertical lines ──
-    dpc_mean_val = np.mean([p.mean() for p in dpc_seed_profits])
-    pw_mean_val  = miqp_pw_profits.mean()
-    gl_mean_val  = miqp_gl_profits.mean()
-
-    # ── Plot ──
-    apply_style()
-    fig, ax = plt.subplots(figsize=(COL_WIDTH, 2.2))
-
-    # MI-DPC
-    ax.plot(x, dpc_mean_kde, color=C_MIDPC, lw=1.5, label="MI-DPC (ours)")
-    ax.fill_between(x, dpc_min_kde, dpc_max_kde, color=C_MIDPC, alpha=0.15)
-    ax.axvline(dpc_mean_val, color=C_MIDPC, lw=1.0, ls="--")
-
-    # MIQP-PW
-    ax.plot(x, pw_kde, color=C_MIQP_PW, lw=1.5, label="MIQP-PW")
-    ax.axvline(pw_mean_val, color=C_MIQP_PW, lw=1.0, ls="--")
-
-    # MIQP-GL
-    ax.plot(x, gl_kde, color=C_MIQP_GL, lw=1.5, label="MIQP-GL")
-    ax.axvline(gl_mean_val, color=C_MIQP_GL, lw=1.0, ls="--")
-
-    # Labels
-    ax.set_xlabel("Ex-post profit (EUR/day)")
-    ax.set_ylabel("Density")
-
-    # Legend
-    ax.legend(frameon=False)
-
-    cleanup_axes(ax, grid=False)
-
-    fig.tight_layout()
-
-    # ── Save ──
     output_dir.mkdir(parents=True, exist_ok=True)
     out_path = output_dir / "profit_distribution.pdf"
-    fig.savefig(out_path, bbox_inches="tight")
+    fig.savefig(out_path, bbox_inches="tight", pad_inches=0.01)
     plt.close(fig)
     print(f"Saved: {out_path}")
     return out_path

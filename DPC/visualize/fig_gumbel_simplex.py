@@ -8,6 +8,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+
+from DPC.visualize.style import apply_theme, current_theme, themed
 plt.rcParams["pdf.fonttype"] = 42
 plt.rcParams["ps.fonttype"] = 42
 
@@ -60,6 +62,8 @@ DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "figs" / "gumbel_simplex.
 
 def main(out_path: Path | None = None) -> Path:
     out_path = Path(out_path) if out_path is not None else DEFAULT_OUTPUT
+    apply_theme()
+    label_scale = 1.0 if current_theme() == "web-dark" else 0.7
 
     # ── Parameters ──
     logits = np.array([0.5, 0.2, 1.5])  # pump, idle, turbine
@@ -90,12 +94,12 @@ def main(out_path: Path | None = None) -> Path:
         colors = mode_colors[vidx]
 
         # Draw triangle
-        ax.plot(tri[:, 0], tri[:, 1], color="0.6", linewidth=0.5, zorder=1)
+        ax.plot(tri[:, 0], tri[:, 1], color=themed("0.6", "faint"), linewidth=0.5, zorder=1)
 
         # Vertex markers
         for k in range(3):
             ax.plot(V[k, 0], V[k, 1], "o", color=mode_colors[k],
-                    markersize=3.5, markeredgecolor="0.3", markeredgewidth=0.4,
+                    markersize=3.5, markeredgecolor=themed("0.3", "muted"), markeredgewidth=0.4,
                     zorder=5)
 
         # Scatter samples — larger points at low tau where they cluster on edges
@@ -107,13 +111,13 @@ def main(out_path: Path | None = None) -> Path:
         # Vertex labels — outside corners, offset away from triangle
         ax.text(V[0, 0] - 0.06, V[0, 1] - 0.06, "P",
                 ha="right", va="top", fontsize=6, fontweight="bold",
-                color=mode_colors[0] * 0.7)
+                color=mode_colors[0] * label_scale)
         ax.text(V[1, 0] + 0.06, V[1, 1] - 0.06, "I",
                 ha="left", va="top", fontsize=6, fontweight="bold",
-                color=mode_colors[1] * 0.7)
+                color=mode_colors[1] * label_scale)
         ax.text(V[2, 0] + 0.08, V[2, 1] + 0.02, "T",
                 ha="left", va="center", fontsize=6, fontweight="bold",
-                color=mode_colors[2] * 0.7)
+                color=mode_colors[2] * label_scale)
 
         # Temperature label
         ax.set_title(rf"$\tau\!=\!{tau}$", fontsize=7.5, pad=4)

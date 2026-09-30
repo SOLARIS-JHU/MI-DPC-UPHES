@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+from DPC.visualize.style import apply_theme, themed
 plt.rcParams["pdf.fonttype"] = 42
 plt.rcParams["ps.fonttype"] = 42
 
@@ -35,6 +37,7 @@ DEFAULT_OUTPUT = Path(__file__).resolve().parents[2] / "figs" / "ste_clamp.pdf"
 
 def main(out_path: Path | None = None) -> Path:
     out_path = Path(out_path) if out_path is not None else DEFAULT_OUTPUT
+    apply_theme()
 
     # ── Bounds ──
     a, b = 0.0, 1.0
@@ -53,10 +56,10 @@ def main(out_path: Path | None = None) -> Path:
     # Left panel: forward output
     ax1.plot(x, y_clamp, color="C0", zorder=3, alpha=0.95)
     ax1.plot(x, y_clamp, color="C1", linestyle="--", zorder=4, alpha=0.95)
-    ax1.axhline(a, color="0.7", linewidth=0.5, linestyle="--", zorder=1)
-    ax1.axhline(b, color="0.7", linewidth=0.5, linestyle="--", zorder=1)
-    ax1.axvline(a, color="0.85", linewidth=0.4, linestyle=":", zorder=1)
-    ax1.axvline(b, color="0.85", linewidth=0.4, linestyle=":", zorder=1)
+    ax1.axhline(a, color=themed("0.7", "faint"), linewidth=0.5, linestyle="--", zorder=1)
+    ax1.axhline(b, color=themed("0.7", "faint"), linewidth=0.5, linestyle="--", zorder=1)
+    ax1.axvline(a, color=themed("0.85", "grid"), linewidth=0.4, linestyle=":", zorder=1)
+    ax1.axvline(b, color=themed("0.85", "grid"), linewidth=0.4, linestyle=":", zorder=1)
     ax1.set_xlabel(r"$x$", labelpad=-4)
     ax1.set_ylabel(r"$y$")
     ax1.set_xlim(-1.0, 2.0)
@@ -73,8 +76,8 @@ def main(out_path: Path | None = None) -> Path:
     # Right panel: gradients
     ax2.plot(x, grad_standard, color="C0", label=r"Standard $y=\Pi_{[a,b]}(x)$", zorder=3, alpha=0.95)
     ax2.plot(x, grad_ste, color="C1", linestyle="--", label=r"STE $y=\widetilde{\Pi}_{[a,b]}(x)$", zorder=4, alpha=0.95)
-    ax2.axvline(a, color="0.85", linewidth=0.4, linestyle=":", zorder=1)
-    ax2.axvline(b, color="0.85", linewidth=0.4, linestyle=":", zorder=1)
+    ax2.axvline(a, color=themed("0.85", "grid"), linewidth=0.4, linestyle=":", zorder=1)
+    ax2.axvline(b, color=themed("0.85", "grid"), linewidth=0.4, linestyle=":", zorder=1)
     ax2.set_xlabel(r"$x$", labelpad=-4)
     ax2.set_ylabel(r"$\partial y\,/\,\partial x$")
     ax2.set_xlim(-1.0, 2.0)

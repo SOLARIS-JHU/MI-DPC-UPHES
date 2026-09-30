@@ -35,6 +35,15 @@ def discover_epoch_checkpoints(run_dir: Path) -> list[Path]:
     return [path for _, path in sorted(matches, key=lambda item: (item[0], item[1].name))]
 
 
+def resolve_run_dir(cache_path: str | Path, meta: dict) -> Path:
+    """Run directory recorded in a replay cache, or the cache's own directory
+    when the recorded path no longer exists (caches are stored inside the run)."""
+    recorded = meta.get("run_dir")
+    if recorded and Path(str(recorded)).is_dir():
+        return Path(str(recorded))
+    return Path(cache_path).resolve().parent
+
+
 def replay_epoch_dispatch(
     run_dir: Path,
     date: str,

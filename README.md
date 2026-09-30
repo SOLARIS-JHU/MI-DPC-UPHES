@@ -5,6 +5,8 @@
 **Mixed-Integer Nonlinear Differentiable Predictive Control for Underground Pumped Hydro Energy Storage Systems**
 
 [![IEEE CDC 2026](https://img.shields.io/badge/IEEE%20CDC%202026-accepted-00629B)](https://cdc2026.ieeecss.org/)
+[![Project Page](https://img.shields.io/badge/Project-Page-002D72)](https://solaris-jhu.github.io/MI-DPC-UPHES/)
+[![arXiv](https://img.shields.io/badge/arXiv-2609.17964-b31b1b)](https://arxiv.org/abs/2609.17964)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.9-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
@@ -13,7 +15,7 @@
 
 </div>
 
-Companion code for the paper **"Mixed-Integer Nonlinear Differentiable Predictive Control for Underground Pumped Hydro Energy Storage Systems"** by Honghui Zheng, Ján Boldocký, Yury Dvorkin, and Ján Drgoňa, accepted at the **IEEE Conference on Decision and Control (CDC) 2026**. The paper link and citation will be added upon publication.
+Companion code for the paper **"Mixed-Integer Nonlinear Differentiable Predictive Control for Underground Pumped Hydro Energy Storage Systems"** by Honghui Zheng, Ján Boldocký, Yury Dvorkin, and Ján Drgoňa, accepted at the **IEEE Conference on Decision and Control (CDC) 2026**. The paper is available at [arXiv:2609.17964](https://arxiv.org/abs/2609.17964), and an overview with figures and animations is on the [project page](https://solaris-jhu.github.io/MI-DPC-UPHES/).
 
 An Underground Pumped Hydro Energy Storage (UPHES) plant arbitrages electricity prices by pumping water to an upper reservoir when prices are low and turbining it back when prices are high. Scheduling it day-ahead is a mixed-integer nonlinear program: every hour the unit picks one of three modes (pump, idle, turbine) and a continuous power setpoint, subject to polynomial unit performance curves and nonconvex volume-head coupling.
 
@@ -80,6 +82,7 @@ The converged policy pumps at low prices, turbines at price peaks, and keeps hea
 ├── Data/                         # Belgian Elia day-ahead prices (2024), unit performance curve data
 ├── figs/                         # paper figures (PDF)
 ├── assets/                       # README images (PNG)
+├── website/                      # project page (deployed to GitHub Pages)
 ├── tests/                        # pytest suite
 ├── preprocessing.py              # UPC surface fitting
 ├── preprocess.pkl                # preprocessed system parameters
