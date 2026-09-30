@@ -32,16 +32,14 @@ PDF_FIGURES = [
      "from DPC.visualize import fig_ste_clamp as m; m.main(r'{out}/ste_clamp.pdf')"),
     ("profit_distribution", "profit_distribution.pdf",
      "import pathlib; from DPC.visualize import fig_profit_distribution as m; m.make_figure(pathlib.Path(r'{out}'))"),
-    ("gradient_diagnostics", "gradient_diagnostics.pdf",
-     "from DPC.visualize import fig_gradient_diagnostics as m; m.main(output_dir=r'{out}')"),
     ("schedule_evolution", "schedule_evolution.pdf",
      "from DPC.visualize import fig_schedule_evolution as m; m.make_figure(r'{out}', cache_path=r'{cache}')"),
-    ("epoch_dispatch", "epoch_dispatch_colormap.pdf",
-     "from pathlib import Path; from DPC.visualize import fig_dispatch_evolution as m; m.make_figures(Path(r'{cache}'), Path(r'{out}'), include_miqp=False)"),
 ]
 GIFS = [
     ("schedule_evolution", ["-m", "DPC.visualize.anim_schedule_evolution", "--cache", "{cache}", "--output", "{gif}"]),
     ("gumbel_simplex", ["-m", "DPC.visualize.anim_gumbel_simplex", "--output", "{gif}"]),
+    # --still writes the final frame as the reduced-motion fallback
+    ("training_run", ["-m", "DPC.visualize.anim_training_run", "--cache", "{cache}", "--output", "{gif}", "--still", "{still}"]),
 ]
 
 
@@ -71,7 +69,7 @@ def build(out_dir: Path, *, bench_dir: Path, cache: Path, only: set[str] | None 
             if only and stem not in only:
                 continue
             gif = out_dir / f"{stem}{suffix}.gif"
-            _run([a.format(cache=cache, gif=gif) for a in args], env)
+            _run([a.format(cache=cache, gif=gif, still=gif.with_suffix(".png")) for a in args], env)
             written.append(gif)
     return written
 
