@@ -183,11 +183,14 @@ $$
           <ol class="components">
             <li><strong>Transformer policy.</strong> Each hour is a token holding the normalized price and the initial head and volume. A Transformer encoder attends over the full horizon, which is what arbitrage needs: whether to pump at 3 a.m. depends on the evening peak. Two heads output the power ratios and the mode logits, and the mode-logit biases are initialized to the mode frequencies of optimal schedules so that training starts from sensible mode mixes.</li>
             <li><strong>Gumbel-Softmax with two-stage annealing.</strong> Each hour's mode is sampled as a hard one-hot choice in the forward pass, while the backward pass differentiates a softmax relaxation at temperature \(\tau\). MI-DPC holds the temperature high through a warm-up and then decays it exponentially. The details are below.</li>
-            <li><strong>Parallel differentiable simulator.</strong> Rolling the plant out hour by hour takes 24 sequential simulator steps. The parallel rollout evaluates all hours at once from the initial head, recovers the head trajectory, and re-evaluates once with it. This two-pass fixed-point estimate gives up a little simulator fidelity during training and makes training about 12 times faster.</li>
+            <li><strong>Parallel differentiable simulator.</strong> Rolling the plant out hour by hour makes backpropagation a 24-step chain, with the vanishing gradients familiar from recurrent networks. The parallel rollout evaluates all hours at once from the initial head, recovers the head trajectory, and re-evaluates once with it. This two-pass fixed-point estimate gives up a little simulator fidelity during training for a much stronger gradient signal.</li>
             <li><strong>Straight-through clamp and soft penalties.</strong> States are clamped to their physical bounds in the forward pass, so profit is never computed on an infeasible trajectory, while the backward pass uses a unit gradient so that a saturated state still produces a training signal. Penalties on the unclamped head and volume push the policy back inside the bounds.</li>
           </ol>
         </div>
         <h3 id="method-modes">Differentiable mode selection</h3>
+        <div class="prose">
+          <p>Gumbel-Softmax is used here, rather than a sigmoid or rounding straight-through estimator, because the three modes are mutually exclusive and unordered, which a softmax over three logits encodes by construction, and because its noise makes the forward pass a sample from the policy's own distribution while the temperature controls the bias and variance of the gradient.</p>
+        </div>
         <div class="prose">
           <p>For each hour \(t\) the policy outputs three logits \(\boldsymbol{\ell}_t = (\ell_{t,P}, \ell_{t,I}, \ell_{t,T})\), one per mode. During training they are perturbed with independent Gumbel noise and passed through a softmax at temperature \(\tau\):</p>
         </div>
@@ -233,17 +236,6 @@ $$
           </picture>
           <figcaption>Relaxed samples \(\tilde{\boldsymbol{s}}_t\) on the mode simplex as the temperature anneals. Lower \(\tau\) concentrates the samples at the pump (P), idle (I), and turbine (T) vertices. The animation is illustrative: it sweeps \(\tau\) smoothly from 5 to 0.05 and is not the two-stage training schedule above.</figcaption>
         </figure>
-        <h3 id="method-why-gumbel">Why Gumbel-Softmax</h3>
-        <div class="prose">
-          <p>The choice follows from the structure of the decision. The paper does not benchmark it against the alternatives below; these are the design reasons.</p>
-          <ol class="components">
-            <li><strong>The decision is categorical, not binary.</strong> Exactly one of three modes is active each hour. A sigmoid with Bernoulli sampling or rounding produces independent binary variables: two of them (pump on, turbine on) admit the invalid combination where both are on, which then needs its own penalty. Rounding a single scalar to \(\{-1, 0, 1\}\) avoids that but imposes an order, with idle sitting between pump and turbine, so a switch from pumping to generating has to pass through idle. A softmax over three logits selects exactly one mode by construction and treats the three symmetrically.</li>
-            <li><strong>Sampling explores, deterministic rounding does not.</strong> A plain straight-through argmax always executes the currently preferred mode. With Gumbel noise the forward pass is a genuine sample from the policy's own distribution, so modes that are close in logit are actually tried in the simulator while the policy is still undecided, and the sampling sharpens by itself as the logits separate.</li>
-            <li><strong>The temperature is a usable dial.</strong> It trades gradient bias against gradient variance, which is what the two-stage schedule exploits; in the ablation, annealing beats a fixed low temperature and more than halves the spread across seeds. A sigmoid or identity straight-through estimator has no such parameter.</li>
-            <li><strong>The simulator's gradient is used directly.</strong> Score-function estimators such as REINFORCE are unbiased and need no relaxation, but they use only the value of the loss and have high variance. Here the plant model is known and differentiable, so a pathwise gradient through it carries far more information per sample, which is the premise of differentiable predictive control.</li>
-          </ol>
-          <p>A note on terms. Strictly, a straight-through estimator is the backward-pass substitution alone: a non-differentiable operation is treated as the identity, or as a smooth surrogate, when differentiating. Gumbel-Softmax is a continuous relaxation of a categorical sample. MI-DPC uses the two together, the straight-through Gumbel-Softmax estimator: hard sample forward, relaxed gradient backward. The family that contains all of these, including sigmoid and sparsemax straight-through variants and score-function methods, is better called gradient estimators for discrete variables.</p>
-        </div>
         <h3 id="method-clamp">Straight-through clamp and loss</h3>
         <div class="prose">
           <p>The same forward-hard, backward-smooth idea is applied to the state bounds.</p>
@@ -327,13 +319,13 @@ $$
           <ol class="components">
             <li><strong>Architecture.</strong> The Transformer reaches 2,489 ± 71 EUR/day, ahead of the Bi-LSTM (2,421 ± 133), the MLP (2,353 ± 143), and the CNN (2,081 ± 187).</li>
             <li><strong>Temperature schedule.</strong> Two-stage annealing beats a fixed temperature of 0.08 (2,285 ± 163 EUR/day) and more than halves the spread across seeds, from 163 to 71 EUR/day: the warm-up regularizes the combinatorial search.</li>
-            <li><strong>Training simulator.</strong> The parallel rollout beats the sequential rollout (2,142 ± 51 EUR/day) and trains 12× faster, 176 s against 2,133 s in the paired runs.</li>
+            <li><strong>Training simulator.</strong> The parallel rollout beats the sequential rollout (2,142 ± 51 EUR/day) and trains 12× faster, 161 s against 2,133 s.</li>
           </ol>
         </div>
         <h3 id="results-dynamics">Training dynamics</h3>
         <div class="prose">
           <p>The animation replays one training run on the same representative day: at each epoch it shows the schedule the policy would produce at that point in training. The broad arbitrage pattern, pumping through the cheap midday hours and generating in the evening peak, is found within the first four epochs, while the temperature is still high. What keeps changing afterwards is the low-margin early morning, where the mode flips between pump and turbine from one epoch to the next. Those hours settle only as the temperature decays, and idle hours appear only late in training, once the decisions are nearly hard.</p>
-          <p>Training with the sequential rollout instead reaches a lower profit (see the ablation above) and takes longer: over 47 paired runs the mean training time is 2,133 s, against 176 s with the parallel simulator, a 12-fold speed-up.</p>
+          <p>Training with the sequential rollout instead reaches a lower profit (see the ablation above). The gradient that reaches the policy is weaker there: averaged over training and over 47 seeds, its norm is 3.4 times smaller than with the parallel simulator.</p>
         </div>
         <p class="note">This animation is supplementary; it is not in the conference paper.</p>
         <figure class="figure figure-framed figure-scroll">
