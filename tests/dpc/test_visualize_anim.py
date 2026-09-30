@@ -98,3 +98,25 @@ def test_gumbel_frames_anneal_temperature():
     assert taus[0] == 5.0 and abs(taus[-1] - 0.05) < 1e-9
     assert all(a > b for a, b in zip(taus, taus[1:]))
     assert frames[0].size == frames[-1].size
+
+
+def test_save_gif_keeps_the_background_colour_exact(tmp_path):
+    # The page frames animations on a card of exactly this colour; a palette
+    # that rounds white to #fcfcfc shows as a visible grey rectangle.
+    from DPC.visualize.fig_schedule_evolution import draw_schedule
+    from DPC.visualize.anim_utils import fig_to_rgb
+    import matplotlib.pyplot as plt
+
+    fig, _, _ = draw_schedule(_sample_schedule_payload(), trajectory_alpha=0.12)
+    try:
+        fig.set_dpi(80)
+        fig.patch.set_facecolor("#ffffff")
+        frame = fig_to_rgb(fig)
+    finally:
+        plt.close(fig)
+    assert frame.getpixel((0, 0)) == (255, 255, 255)
+    out = anim_utils.save_gif([frame, frame.transpose(Image.Transpose.FLIP_LEFT_RIGHT)], [80, 80], tmp_path / "bg.gif")
+    with Image.open(out) as gif:
+        for index in range(gif.n_frames):
+            gif.seek(index)
+            assert gif.convert("RGB").getpixel((0, 0)) == (255, 255, 255)
