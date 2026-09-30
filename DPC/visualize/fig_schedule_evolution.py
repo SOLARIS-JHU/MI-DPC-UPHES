@@ -22,13 +22,13 @@ from DPC.evaluate import evaluate_day_oneshot
 from DPC.experiments import benchmark_tuner
 from DPC.experiments.benchmark_data import load_benchmark_price_days
 from DPC.system import build_oneshot_system
-from DPC.visualize.epoch_replay import discover_epoch_checkpoints
+from DPC.visualize.epoch_replay import discover_epoch_checkpoints, resolve_run_dir
 from DPC.visualize.style import (
     FIGS_OUT,
     FULL_WIDTH,
-    GRID_KW,
     apply_style,
     cleanup_axes,
+    grid_kw,
 )
 
 
@@ -177,7 +177,7 @@ def compute_feasible_power_bounds(system_params: dict, head: np.ndarray) -> dict
 
 def load_schedule_payload(cache_path: str | Path, device: str = "cpu") -> dict[str, object]:
     meta = load_cache_metadata(cache_path)
-    run_dir = Path(str(meta["run_dir"]))
+    run_dir = resolve_run_dir(cache_path, meta)
     date, power, head = load_final_cached_trace(cache_path)
     pkl_path = str(meta.get("pkl_path", "preprocess.pkl"))
     benchmark_csv = str(meta.get("benchmark_csv", "Data/price_data_2024.csv"))
@@ -219,7 +219,8 @@ def load_schedule_payload(cache_path: str | Path, device: str = "cpu") -> dict[s
     }
 
 
-def build_figure(payload: dict[str, object]) -> plt.Figure:
+def draw_schedule(payload: dict[str, object], *, trajectory_alpha: float = 1.0):
+    """Draw the schedule; return the figure, its axes, and the four trajectory artists."""
     apply_style()
 
     hours = np.asarray(payload["hours"], dtype=float)
@@ -256,11 +257,11 @@ def build_figure(payload: dict[str, object]) -> plt.Figure:
     for bound in (pos_min, pos_max, neg_min, neg_max):
         ax_power.step(hours, bound, where="mid", color=POWER_COLOR, linewidth=LINEWIDTH_BOUND, alpha=BOUND_ALPHA, zorder=1)
     ax_power.axhline(0.0, color=POWER_COLOR, linewidth=LINEWIDTH_REF, alpha=0.65, zorder=2)
-    ax_price.step(hours, price, where="mid", color=PRICE_COLOR, linewidth=LINEWIDTH_MAIN, zorder=0)
-    ax_power.step(hours, power, where="mid", color=POWER_COLOR, linewidth=LINEWIDTH_MAIN, zorder=10)
+    (price_line,) = ax_price.step(hours, price, where="mid", color=PRICE_COLOR, linewidth=LINEWIDTH_MAIN, zorder=0, alpha=trajectory_alpha)
+    (power_line,) = ax_power.step(hours, power, where="mid", color=POWER_COLOR, linewidth=LINEWIDTH_MAIN, zorder=10, alpha=trajectory_alpha)
 
-    ax_head.plot(hours, head, color=HEAD_COLOR, linewidth=LINEWIDTH_MAIN, zorder=3)
-    ax_volume.plot(hours, volume, color=VOLUME_COLOR, linewidth=LINEWIDTH_MAIN, zorder=3)
+    (head_line,) = ax_head.plot(hours, head, color=HEAD_COLOR, linewidth=LINEWIDTH_MAIN, zorder=3, alpha=trajectory_alpha)
+    (volume_line,) = ax_volume.plot(hours, volume, color=VOLUME_COLOR, linewidth=LINEWIDTH_MAIN, zorder=3, alpha=trajectory_alpha)
     ax_volume.axhline(
         target_volume,
         color=VOLUME_COLOR,
@@ -275,7 +276,7 @@ def build_figure(payload: dict[str, object]) -> plt.Figure:
 
     for ax in (ax_power, ax_head):
         cleanup_axes(ax)
-        ax.xaxis.grid(True, **GRID_KW)
+        ax.xaxis.grid(True, **grid_kw())
         ax.set_axisbelow(True)
         ax.set_xlim(0, 23)
         ax.set_xticks(range(0, 24, 4))
@@ -297,6 +298,13 @@ def build_figure(payload: dict[str, object]) -> plt.Figure:
     ax_volume.spines["top"].set_visible(False)
 
     fig.subplots_adjust(left=0.10, right=0.90, bottom=0.14, top=0.98, hspace=0.08)
+    axes = {"power": ax_power, "price": ax_price, "head": ax_head, "volume": ax_volume}
+    artists = {"power": power_line, "price": price_line, "head": head_line, "volume": volume_line}
+    return fig, axes, artists
+
+
+def build_figure(payload: dict[str, object]) -> plt.Figure:
+    fig, _, _ = draw_schedule(payload)
     return fig
 
 

@@ -21,6 +21,7 @@ plt.rcParams["pdf.fonttype"] = 42
 plt.rcParams["ps.fonttype"] = 42
 
 from DPC.config import load_system_params
+from DPC.visualize.epoch_replay import resolve_run_dir
 from DPC.visualize.style import (
     apply_style,
     cleanup_axes,
@@ -31,7 +32,8 @@ from DPC.visualize.style import (
     EPOCH_DISPATCH_ALPHA,
     EPOCH_DISPATCH_LINEWIDTH,
     FIGS_OUT,
-    GRID_KW,
+    grid_kw,
+    themed,
     MIQP_ROOT,
 )
 
@@ -95,7 +97,7 @@ def load_training_curve(cache_path: Path) -> tuple[np.ndarray, np.ndarray, np.nd
     with np.load(Path(cache_path), allow_pickle=True) as cache:
         meta_raw = cache["meta_json"].item()
     meta = json.loads(str(meta_raw))
-    run_dir = Path(meta["run_dir"])
+    run_dir = resolve_run_dir(cache_path, meta)
     history_path = run_dir / "history.csv"
     if history_path.exists():
         epochs: list[int] = []
@@ -235,7 +237,7 @@ def _plot_epoch_dispatch(
         ax.plot(
             hours,
             curve,
-            color="black" if is_final_epoch else cmap(norm(epoch)),
+            color=themed("black", "fg") if is_final_epoch else cmap(norm(epoch)),
             alpha=0.95 if is_final_epoch else nonfinal_alpha,
             linewidth=EPOCH_DISPATCH_LINEWIDTH + 0.2 if is_final_epoch else EPOCH_DISPATCH_LINEWIDTH,
             zorder=4 if is_final_epoch else 2,
@@ -248,7 +250,7 @@ def _plot_epoch_dispatch(
     if target_level is not None:
         ax.axhline(
             target_level,
-            color=TARGET_HEAD_COLOR,
+            color=themed(TARGET_HEAD_COLOR, "muted"),
             linewidth=1.15,
             linestyle=(0, (4, 2)),
             alpha=0.95,
@@ -256,7 +258,7 @@ def _plot_epoch_dispatch(
         )
 
     cleanup_axes(ax)
-    ax.xaxis.grid(True, **GRID_KW)
+    ax.xaxis.grid(True, **grid_kw())
     ax.set_xlabel("Hour" if show_xlabel else "", fontsize=FIG_LABEL_FONTSIZE)
     ax.set_ylabel(ylabel, fontsize=FIG_LABEL_FONTSIZE)
     ax.set_xlim(0, 23)
@@ -276,7 +278,7 @@ def _plot_epoch_dispatch(
     if miqp_pw is not None or miqp_gl is not None:
         ax.legend(frameon=False, loc="upper center", fontsize=FIG_LEGEND_FONTSIZE)
     else:
-        final_handle = Line2D([0], [0], color="black", linewidth=EPOCH_DISPATCH_LINEWIDTH + 0.2)
+        final_handle = Line2D([0], [0], color=themed("black", "fg"), linewidth=EPOCH_DISPATCH_LINEWIDTH + 0.2)
         handles = [final_handle]
         labels = ["Final epoch"]
         if target_level is not None:
@@ -284,7 +286,7 @@ def _plot_epoch_dispatch(
                 Line2D(
                     [0],
                     [0],
-                    color=TARGET_HEAD_COLOR,
+                    color=themed(TARGET_HEAD_COLOR, "muted"),
                     linewidth=1.15,
                     linestyle=(0, (4, 2)),
                     alpha=0.95,
@@ -300,7 +302,7 @@ def _plot_epoch_dispatch(
             handlelength=1.8,
         )
         for text in legend.get_texts():
-            text.set_color("black" if text.get_text() == "Final epoch" else TARGET_HEAD_COLOR)
+            text.set_color(themed("black", "fg") if text.get_text() == "Final epoch" else themed(TARGET_HEAD_COLOR, "muted"))
 
 
 def _plot_price_and_head(
@@ -323,7 +325,7 @@ def _plot_price_and_head(
         ax_aux.plot(hours, aux, color=aux_color, linewidth=1.1)
 
     cleanup_axes(ax_price)
-    ax_price.xaxis.grid(True, **GRID_KW)
+    ax_price.xaxis.grid(True, **grid_kw())
     ax_price.spines["bottom"].set_visible(True)
     ax_aux.spines["top"].set_visible(False)
 
@@ -364,7 +366,7 @@ def _plot_plain_price_and_power(
     ax_price.step(hours, price, where="mid", color=PLAIN_PRICE_COLOR, linewidth=0.9, zorder=0.5)
 
     cleanup_axes(ax_power)
-    ax_power.xaxis.grid(True, **GRID_KW)
+    ax_power.xaxis.grid(True, **grid_kw())
     ax_power.spines["bottom"].set_visible(True)
     ax_price.spines["top"].set_visible(False)
 
@@ -406,7 +408,7 @@ def _plot_training_curve(
     ax.scatter(history_epochs, losses, c=history_epochs, cmap=LOSS_DOT_CMAP, norm=norm, s=7, zorder=2)
     final_epoch = float(history_epochs.max())
     final_value = float(losses[np.argmax(history_epochs)])
-    ax.scatter([final_epoch], [final_value], color="black", s=18, zorder=3)
+    ax.scatter([final_epoch], [final_value], color=themed("black", "fg"), s=18, zorder=3)
 
     cleanup_axes(ax)
     ax.set_xlabel("Epoch", fontsize=FIG_LABEL_FONTSIZE)
@@ -549,7 +551,7 @@ def _build_figure(
                 price=np.asarray(price, dtype=float),
                 aux=final_aux,
                 aux_label="Head (m)",
-                price_color=PRICE_COLOR,
+                price_color=themed(PRICE_COLOR, "muted"),
                 aux_color=HEAD_COLOR,
                 aux_as_step=False,
             )

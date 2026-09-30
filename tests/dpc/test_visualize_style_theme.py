@@ -67,3 +67,13 @@ def test_bench_dir_env_override(monkeypatch, tmp_path):
     finally:
         monkeypatch.delenv("MIDPC_BENCH_DIR")
         importlib.reload(style)
+
+
+def test_resolve_run_dir_falls_back_to_cache_parent(tmp_path):
+    from DPC.visualize.epoch_replay import resolve_run_dir
+
+    cache = tmp_path / "run" / "epoch_dispatch_trace.npz"
+    cache.parent.mkdir()
+    cache.touch()
+    assert resolve_run_dir(cache, {"run_dir": "/nonexistent/old/location"}) == cache.parent
+    assert resolve_run_dir(cache, {"run_dir": str(tmp_path)}) == tmp_path
