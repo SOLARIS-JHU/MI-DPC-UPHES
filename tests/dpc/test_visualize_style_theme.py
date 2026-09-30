@@ -86,3 +86,15 @@ def test_by_theme_picks_the_dark_value_only_under_web_dark():
     assert style.by_theme("#D62728", "#ff6b6b") == "#D62728"
     style.apply_theme("web-dark")
     assert style.by_theme("#D62728", "#ff6b6b") == "#ff6b6b"
+
+
+def test_resolve_run_dir_ignores_a_missing_or_empty_run_dir(tmp_path, monkeypatch):
+    from DPC.visualize.epoch_replay import resolve_run_dir
+
+    cache = tmp_path / "run" / "epoch_dispatch_trace.npz"
+    cache.parent.mkdir()
+    cache.touch()
+    monkeypatch.chdir(tmp_path)  # Path("") is the working directory, which exists
+    assert resolve_run_dir(cache, {}) == cache.parent
+    assert resolve_run_dir(cache, {"run_dir": ""}) == cache.parent
+    assert resolve_run_dir(cache, {"run_dir": None}) == cache.parent
