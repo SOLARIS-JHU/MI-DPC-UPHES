@@ -136,7 +136,9 @@ def make_figure(output_dir: pathlib.Path) -> pathlib.Path:
     ax.set_ylabel("Density")
 
     # Legend
-    ax.legend(frameon=False)
+    # Above the axes: inside, it collides with the curves and the mean lines.
+    ax.legend(frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3,
+              fontsize=7, handlelength=1.4, columnspacing=1.2)
 
     cleanup_axes(ax, grid=False)
 
