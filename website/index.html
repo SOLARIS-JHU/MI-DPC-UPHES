@@ -183,7 +183,7 @@ $$
           <ol class="components">
             <li><strong>Transformer policy.</strong> Each hour is a token holding the normalized price and the initial head and volume. A Transformer encoder attends over the full horizon, which is what arbitrage needs: whether to pump at 3 a.m. depends on the evening peak. Two heads output the power ratios and the mode logits, and the mode-logit biases are initialized to the mode frequencies of optimal schedules so that training starts from sensible mode mixes.</li>
             <li><strong>Gumbel-Softmax with two-stage annealing.</strong> Each hour's mode is sampled as a hard one-hot choice in the forward pass, while the backward pass differentiates a softmax relaxation at temperature \(\tau\). MI-DPC holds the temperature high through a warm-up and then decays it exponentially. The details are below.</li>
-            <li><strong>Parallel differentiable simulator.</strong> Rolling the plant out hour by hour makes backpropagation a 24-step chain, with the vanishing gradients familiar from recurrent networks. The parallel rollout evaluates all hours at once from the initial head, recovers the head trajectory, and re-evaluates once with it. This two-pass fixed-point estimate gives up a little simulator fidelity during training for a much stronger gradient signal.</li>
+            <li><strong>Parallel differentiable simulator.</strong> Rolling the plant out hour by hour takes 24 sequential simulator steps. The parallel rollout evaluates all hours at once from the initial head, recovers the head trajectory, and re-evaluates once with it. This two-pass fixed-point estimate gives up a little simulator fidelity during training and makes training about 12 times faster.</li>
             <li><strong>Straight-through clamp and soft penalties.</strong> States are clamped to their physical bounds in the forward pass, so profit is never computed on an infeasible trajectory, while the backward pass uses a unit gradient so that a saturated state still produces a training signal. Penalties on the unclamped head and volume push the policy back inside the bounds.</li>
           </ol>
         </div>
@@ -327,13 +327,13 @@ $$
           <ol class="components">
             <li><strong>Architecture.</strong> The Transformer reaches 2,489 ± 71 EUR/day, ahead of the Bi-LSTM (2,421 ± 133), the MLP (2,353 ± 143), and the CNN (2,081 ± 187).</li>
             <li><strong>Temperature schedule.</strong> Two-stage annealing beats a fixed temperature of 0.08 (2,285 ± 163 EUR/day) and more than halves the spread across seeds, from 163 to 71 EUR/day: the warm-up regularizes the combinatorial search.</li>
-            <li><strong>Training simulator.</strong> The parallel rollout beats the sequential rollout (2,142 ± 51 EUR/day) and trains 12× faster, 161 s against 2,133 s.</li>
+            <li><strong>Training simulator.</strong> The parallel rollout beats the sequential rollout (2,142 ± 51 EUR/day) and trains 12× faster, 176 s against 2,133 s in the paired runs.</li>
           </ol>
         </div>
         <h3 id="results-dynamics">Training dynamics</h3>
         <div class="prose">
           <p>The animation replays one training run on the same representative day: at each epoch it shows the schedule the policy would produce at that point in training. The broad arbitrage pattern, pumping through the cheap midday hours and generating in the evening peak, is found within the first four epochs, while the temperature is still high. What keeps changing afterwards is the low-margin early morning, where the mode flips between pump and turbine from one epoch to the next. Those hours settle only as the temperature decays, and idle hours appear only late in training, once the decisions are nearly hard.</p>
-          <p>Training with the sequential rollout instead reaches a lower profit (see the ablation above). The gradient that reaches the policy is weaker there: averaged over training and over 47 seeds, its norm is 3.4 times smaller than with the parallel simulator.</p>
+          <p>Training with the sequential rollout instead reaches a lower profit (see the ablation above) and takes longer: over 47 paired runs the mean training time is 2,133 s, against 176 s with the parallel simulator, a 12-fold speed-up.</p>
         </div>
         <p class="note">This animation is supplementary; it is not in the conference paper.</p>
         <figure class="figure figure-framed figure-scroll">
