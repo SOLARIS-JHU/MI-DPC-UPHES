@@ -172,3 +172,8 @@ table.results tbody tr:last-child td { border-bottom: none; }
 .figure-pair .figure { margin: 0; }
 @media (max-width: 900px) { .figure-pair { grid-template-columns: 1fr; } }
 .note { color: var(--muted); font-size: 0.95rem; }
+/* Wide figures stay legible on phones by scrolling sideways instead of shrinking */
+@media (max-width: 700px) {
+  .figure-scroll picture { overflow-x: auto; }
+  .figure-scroll img { width: 720px; max-width: none; }
+}
