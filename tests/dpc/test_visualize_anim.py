@@ -120,3 +120,60 @@ def test_save_gif_keeps_the_background_colour_exact(tmp_path):
         for index in range(gif.n_frames):
             gif.seek(index)
             assert gif.convert("RGB").getpixel((0, 0)) == (255, 255, 255)
+
+
+def _sample_training_run_payload(n_epochs: int = 4) -> dict[str, object]:
+    hours = np.arange(24, dtype=float)
+    final_power = np.where(hours < 8, -6.0, np.where(hours > 15, 6.0, 0.0))
+    blend = np.linspace(0.0, 1.0, n_epochs)[:, None]
+    power = blend * final_power[None, :] + (1.0 - blend) * 3.0
+    head = 77.0 + blend * np.linspace(-4.0, 10.0, 24)[None, :]
+    ones = np.ones((n_epochs, 24))
+    return {
+        "date": "2024/08/09",
+        "hours": hours,
+        "price": np.linspace(10.0, 110.0, 24),
+        "epochs": np.arange(1, n_epochs + 1),
+        "power": power,
+        "head": head,
+        "volume": 3.0e5 - 1.5e4 * (head - 77.0),
+        "bounds": {"pos_min": 3.0 * ones, "pos_max": 7.5 * ones, "neg_min": -8.0 * ones, "neg_max": -5.0 * ones},
+        "min_volume": 0.0,
+        "max_volume": 588000.0,
+        "target_volume": 3.0e5,
+        "loss": np.linspace(2000.0, -2500.0, n_epochs),
+        "tau": np.array([10.0, 10.0, 1.0, 0.08])[:n_epochs],
+    }
+
+
+def test_training_run_frames_cover_every_epoch_with_interpolation():
+    from DPC.visualize import anim_training_run
+
+    payload = _sample_training_run_payload()
+    frames, positions = anim_training_run.render_frames(payload, steps_per_epoch=3, dpi=50)
+    assert len(frames) == len(positions) == 3 * 3 + 1
+    assert positions[0] == 1.0 and positions[-1] == 4.0
+    assert all(b > a for a, b in zip(positions, positions[1:]))
+    assert {1.0, 2.0, 3.0, 4.0} <= set(positions)
+    assert len({f.size for f in frames}) == 1
+
+
+def test_training_run_schedule_moves_toward_the_final_epoch():
+    from DPC.visualize import anim_training_run
+
+    payload = _sample_training_run_payload()
+    frames, _ = anim_training_run.render_frames(payload, steps_per_epoch=1, dpi=50)
+    arrays = [np.asarray(f, dtype=np.int16) for f in frames]
+    distance_to_last = [int(np.abs(a - arrays[-1]).sum()) for a in arrays]
+    assert distance_to_last[-1] == 0
+    assert all(b < a for a, b in zip(distance_to_last, distance_to_last[1:]))
+
+
+def test_training_run_rejects_mismatched_history():
+    import pytest
+    from DPC.visualize import anim_training_run
+
+    payload = _sample_training_run_payload()
+    payload["tau"] = payload["tau"][:-1]
+    with pytest.raises(ValueError, match="one loss and tau value per epoch"):
+        anim_training_run.render_frames(payload, steps_per_epoch=1, dpi=50)
