@@ -158,3 +158,22 @@ def test_web_dark_theme_recolours_schedule_axes(monkeypatch):
             plt.close(fig)
         finally:
             style.apply_theme("paper")
+
+
+def test_web_dark_theme_brightens_schedule_series(monkeypatch):
+    import DPC.visualize.style as style
+    from matplotlib.colors import to_hex
+
+    with plt.rc_context():
+        try:
+            fig, _, artists = fig_schedule_evolution.draw_schedule(_sample_schedule_payload())
+            paper = to_hex(artists["power"].get_color())
+            plt.close(fig)
+            monkeypatch.setenv(style.THEME_ENV, "web-dark")
+            fig, _, artists = fig_schedule_evolution.draw_schedule(_sample_schedule_payload())
+            dark = to_hex(artists["power"].get_color())
+            plt.close(fig)
+        finally:
+            style.apply_theme("paper")
+    assert paper == fig_schedule_evolution.POWER_COLOR.lower()
+    assert dark != paper

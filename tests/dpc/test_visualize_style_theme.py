@@ -77,3 +77,12 @@ def test_resolve_run_dir_falls_back_to_cache_parent(tmp_path):
     cache.touch()
     assert resolve_run_dir(cache, {"run_dir": "/nonexistent/old/location"}) == cache.parent
     assert resolve_run_dir(cache, {"run_dir": str(tmp_path)}) == tmp_path
+
+
+def test_by_theme_picks_the_dark_value_only_under_web_dark():
+    style.apply_theme("paper")
+    assert style.by_theme("#D62728", "#ff6b6b") == "#D62728"
+    style.apply_theme("web-light")
+    assert style.by_theme("#D62728", "#ff6b6b") == "#D62728"
+    style.apply_theme("web-dark")
+    assert style.by_theme("#D62728", "#ff6b6b") == "#ff6b6b"

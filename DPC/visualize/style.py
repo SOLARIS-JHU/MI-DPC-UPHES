@@ -117,6 +117,12 @@ def themed(paper_value, role: str):
     return _DARK[role] if _active_theme == "web-dark" else paper_value
 
 
+def by_theme(paper_value, dark_value):
+    """Return dark_value under web-dark, otherwise paper_value (for series colours
+    that need more contrast on the dark page)."""
+    return dark_value if _active_theme == "web-dark" else paper_value
+
+
 def grid_kw() -> dict:
     return {**GRID_KW, "color": themed(GRID_KW["color"], "grid")}
 
