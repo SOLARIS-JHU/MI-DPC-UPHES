@@ -290,26 +290,20 @@ $$
           </ol>
         </div>
         <h3 id="results-dynamics">Training dynamics</h3>
-        <p class="note">These two figures are supplementary; they are not in the conference paper.</p>
         <div class="prose">
-          <p>The left figure follows one training run on the representative day. Early epochs, at high temperature, produce head trajectories that wander away from the final one; as the temperature decays after the warm-up they tighten onto the converged schedule, and the loss, flat through the warm-up, declines further. The right figure compares the gradient reaching the policy under the two simulators. Averaged over training and over 47 seeds, the gradient norm with the parallel simulator is 3.4 times that of the sequential rollout, and it holds its level through training while the sequential rollout's decays, which is consistent with vanishing gradients through the 24-step chain.</p>
+          <p>The animation replays one training run on the same representative day: at each epoch it shows the schedule the policy would produce at that point in training. The broad arbitrage pattern, pumping through the cheap midday hours and generating in the evening peak, is found within the first four epochs, while the temperature is still high. What keeps changing afterwards is the low-margin early morning, where the mode flips between pump and turbine from one epoch to the next. Those hours settle only as the temperature decays, and idle hours appear only late in training, once the decisions are nearly hard.</p>
+          <p>Training with the sequential rollout instead reaches a lower profit (see the ablation above). The gradient that reaches the policy is weaker there: averaged over training and over 47 seeds, its norm is 3.4 times smaller than with the parallel simulator.</p>
         </div>
-        <div class="figure-pair">
-        <figure class="figure">
+        <p class="note">This animation is supplementary; it is not in the conference paper.</p>
+        <figure class="figure figure-framed figure-scroll">
           <picture>
-            <source srcset="static/epoch_dispatch_dark.png" media="(prefers-color-scheme: dark)">
-            <img src="static/epoch_dispatch.png" alt="Three stacked panels for one training run. Top: hydraulic head over the day at each of 25 training epochs, coloured by epoch, with the final epoch highlighted and the target head dashed. Middle: the final power dispatch and the day-ahead price. Bottom: training loss per epoch and the Gumbel-Softmax temperature schedule" width="977" height="1014" loading="lazy">
+            <source srcset="static/training_run_dark.png" media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)">
+            <source srcset="static/training_run.png" media="(prefers-reduced-motion: reduce)">
+            <source srcset="static/training_run_dark.gif" media="(prefers-color-scheme: dark)">
+            <img src="static/training_run.gif" alt="Animation of one training run over 25 epochs for a representative day. Top panel: the power schedule at the current epoch in red against the day-ahead price in blue, with shaded feasible power bands. Middle panel: the resulting hydraulic head in orange and reservoir volume in green. Bottom strip: training loss and Gumbel-Softmax temperature against epoch, with a cursor at the current epoch" width="1050" height="585" loading="lazy">
           </picture>
-          <figcaption>One training run on the representative day. Top: head trajectory at every epoch, coloured by epoch, with the final epoch highlighted. Middle: final dispatch and price. Bottom: training loss and the temperature schedule.</figcaption>
+          <figcaption>How the schedule for one day evolves during training. Top: power dispatch at the current epoch (red) against the day-ahead price (blue); faint red lines are the schedules of the two previous epochs. Middle: the resulting head (orange) and volume (green). Bottom: training loss and temperature; epochs still to come are shown faintly.</figcaption>
         </figure>
-        <figure class="figure">
-          <picture>
-            <source srcset="static/gradient_diagnostics_dark.png" media="(prefers-color-scheme: dark)">
-            <img src="static/gradient_diagnostics.png" alt="Gradient norm against training epoch on a logarithmic scale for the parallel simulator, labelled Batch, and the sequential simulator, labelled Step, each as a mean line with a shaded band of one standard deviation across seeds" width="1033" height="459" loading="lazy">
-          </picture>
-          <figcaption>Gradient norm during training, mean and one standard deviation across 47 seeds. Batch is the parallel simulator, Step the sequential rollout.</figcaption>
-        </figure>
-        </div>
       </div>
     </section>
 
