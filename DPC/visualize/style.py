@@ -13,7 +13,7 @@ FIGS_OUT = Path(__file__).resolve().parents[2] / "figs"
 
 # ── Benchmark data root ──
 _DPC_ROOT = Path(__file__).resolve().parent.parent
-BENCH_DIR = _DPC_ROOT / "outputs" / "benchmark_suite"
+BENCH_DIR = Path(os.environ.get("MIDPC_BENCH_DIR", _DPC_ROOT / "outputs" / "benchmark_suite"))
 MIQP_ROOT = _DPC_ROOT.parent / "MIQP"
 
 # ── CDC / IEEE style ──
@@ -69,9 +69,66 @@ MIQP_PW_MEAN_EXPOST = 2529.85  # EUR/day, 19-day benchmark mean
 MIQP_GL_MEAN_EXPOST = 1997.35  # EUR/day, 19-day benchmark mean
 
 
-def apply_style():
-    """Apply CDC style globally."""
+# ── Themes ──
+# "paper" is the CDC style above and changes nothing. The web themes are used
+# by build_website_figures: transparent backgrounds, and for web-dark the
+# neutral colours of the project page's dark palette.
+THEME_ENV = "MIDPC_FIG_THEME"
+_THEMES = ("paper", "web-light", "web-dark")
+_DARK = {"fg": "#e8ecf3", "muted": "#a7b1c2", "faint": "#6b7893", "grid": "#2a3a5c"}
+_TRANSPARENT_RC = {
+    "figure.facecolor": "none",
+    "axes.facecolor": "none",
+    "savefig.facecolor": "none",
+    "savefig.transparent": True,
+}
+_DARK_RC = {
+    "text.color": _DARK["fg"],
+    "axes.labelcolor": _DARK["fg"],
+    "axes.edgecolor": _DARK["fg"],
+    "xtick.color": _DARK["fg"],
+    "ytick.color": _DARK["fg"],
+    "legend.labelcolor": _DARK["fg"],
+}
+_BACKGROUND = {"paper": "#ffffff", "web-light": "#ffffff", "web-dark": "#15223d"}
+_active_theme = "paper"
+
+
+def current_theme() -> str:
+    return _active_theme
+
+
+def apply_theme(theme: str | None = None) -> str:
+    """Activate a figure theme (argument, else $MIDPC_FIG_THEME, else paper)."""
+    global _active_theme
+    theme = theme or os.environ.get(THEME_ENV) or "paper"
+    if theme not in _THEMES:
+        raise ValueError(f"Unknown figure theme {theme!r}; expected one of {_THEMES}")
+    _active_theme = theme
+    if theme != "paper":
+        plt.rcParams.update(_TRANSPARENT_RC)
+    if theme == "web-dark":
+        plt.rcParams.update(_DARK_RC)
+    return theme
+
+
+def themed(paper_value, role: str):
+    """Return paper_value, or the dark-palette colour for role under web-dark."""
+    return _DARK[role] if _active_theme == "web-dark" else paper_value
+
+
+def grid_kw() -> dict:
+    return {**GRID_KW, "color": themed(GRID_KW["color"], "grid")}
+
+
+def theme_background(theme: str | None = None) -> str:
+    return _BACKGROUND[theme or _active_theme]
+
+
+def apply_style(theme: str | None = None):
+    """Apply CDC style globally, then the active theme."""
     plt.rcParams.update(STYLE)
+    apply_theme(theme)
 
 
 def cleanup_axes(ax, grid=True):
@@ -79,5 +136,5 @@ def cleanup_axes(ax, grid=True):
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     if grid:
-        ax.yaxis.grid(True, **GRID_KW)
+        ax.yaxis.grid(True, **grid_kw())
         ax.set_axisbelow(True)
